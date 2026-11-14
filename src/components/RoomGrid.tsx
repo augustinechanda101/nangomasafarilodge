@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { BarKind, GridBar, GridRoom } from '../lib/staffTypes';
 import BookingDetailModal from './BookingDetailModal';
+import ActivitySummary from './ActivitySummary';
 
 const BAR: Record<BarKind, string> = {
   checkedIn: 'bg-bark-deep text-sand-card',
@@ -18,11 +19,11 @@ const LEGEND: [BarKind, string][] = [
   ['inspect', 'Needs inspection'],
 ];
 
-interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean; onAction?: (verb: string, bar: GridBar) => void }
+interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean; onAction?: (verb: string, bar: GridBar) => void; summary?: boolean; fill?: boolean }
 
 type Row = { kind: 'header'; label: string } | { kind: 'room'; room: GridRoom; roomIndex: number };
 
-export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1, canAct, onAction }: Props) {
+export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1, canAct, onAction, summary = true, fill = false }: Props) {
   const [activeBar, setActiveBar] = useState<GridBar | null>(null);
 
   // Zoom levels: 1 = 7 days, 2 = 4 days, 3 = 2 days
@@ -44,19 +45,17 @@ export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1
 
   const rowHeights = ['40px', ...rows.map((r) => (r.kind === 'header' ? '30px' : '54px'))];
 
-  // Filter and sort bookings based on visible period
-  const sortedBars = [...bars]
-    .filter((b) => b.start < numColumns)
-    .sort((a, b) => a.start - b.start);
-
   return (
-    <div className="flex flex-col gap-3">
-      <div className="overflow-x-auto">
+    <div className={fill ? 'flex h-full flex-col gap-3' : 'flex flex-col gap-3'}>
+      <div className={fill ? 'min-h-0 flex-1 overflow-x-auto' : 'overflow-x-auto'}>
         <div
           className="grid"
           style={{
             gridTemplateColumns: `170px repeat(${numColumns}, minmax(100px, 1fr))`,
-            gridTemplateRows: rowHeights.join(' '),
+            gridTemplateRows: fill
+              ? `40px repeat(${rows.length}, minmax(30px, 1fr))`
+              : rowHeights.join(' '),
+            height: fill ? '100%' : undefined,
           }}
         >
           {/* Top-left empty cell */}
@@ -154,50 +153,15 @@ export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1
         </div>
       </div>
 
-      {/* Activity Summary */}
-      <div className="rounded-2xl border border-sand-line bg-sand-card p-4">
-        <h4 className="mb-3 text-sm font-semibold text-bark">
-          Activities — next {numColumns} days
-        </h4>
-        <div className="max-h-72 overflow-y-auto">
-        <div className="flex flex-col gap-2">
-          {sortedBars.length === 0 ? (
-            <p className="text-sm text-bark-muted">No activities scheduled</p>
-          ) : (
-            sortedBars.map((b) => {
-              const startLabel = columnLabels[b.start] ?? `Day ${b.start}`;
-              const outDay = Math.min(b.end, numColumns) - 1;
-              const endLabel = columnLabels[outDay] ?? `Day ${outDay}`;
-              const nights = b.end - b.start;
-              const room = rooms[b.room - 1];
-              const [name, ...rest] = b.label.split('·');
-              const detail = rest.join('·').trim();
-              return (
-                <div
-                  key={`${b.room}-${b.start}`}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs ${BAR[b.kind]}`}
-                >
-                  <span className="font-semibold w-28">
-                    {startLabel} → {endLabel}
-                  </span>
-                  <span className="w-16 text-[11px]">
-                    {nights} {nights === 1 ? 'night' : 'nights'}
-                  </span>
-                  <span className="font-semibold w-20">{room?.name ?? `Room ${b.room}`}</span>
-                  <span className="flex-1">
-                    <span className="block font-semibold">{name.trim()}</span>
-                    <span className="block text-[10px] opacity-80">{detail}</span>
-                  </span>
-                  {room?.location && (
-                    <span className="text-[11px] text-sand-card">{room.location}</span>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-        </div>
-      </div>
+      {summary && (
+        <ActivitySummary
+          bars={bars}
+          rooms={rooms}
+          dayLabels={columnLabels}
+          numColumns={numColumns}
+          title={`Activities — next ${numColumns} days`}
+        />
+      )}
 
       <div className="flex flex-wrap gap-2">
         {LEGEND.map(([kind, label]) => (

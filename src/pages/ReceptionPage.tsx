@@ -9,6 +9,7 @@ import RoomDetailView from '../components/RoomDetailView';
 import MonthlyGrid from '../components/MonthlyGrid';
 import VacancyView from '../components/VacancyView';
 import FinanceCard from '../components/FinanceCard';
+import ActivitySummary from '../components/ActivitySummary';
 import StaffHeader from '../components/StaffHeader';
 
 type ViewMode = 'overview' | 'today' | 'monthly' | 'day';
@@ -358,25 +359,36 @@ export default function ReceptionPage() {
               />
             ) : splitByLocation ? (
               /* One-day views on All Locations: each location side by side */
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                {locationGroups.map((g) => (
-                  <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3">
-                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
-                    <RoomGrid
-                      days={[dayLabels[0]]}
-                      rooms={g.rooms}
-                      bars={g.bars}
-                      onRoomClick={(roomNumber) => {
-                        const room = g.rooms[roomNumber - 1];
-                        setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
-                      }}
-                      zoomLevel={1}
-                      canAct
-                      onAction={handleAction}
-                    />
-                  </section>
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  {locationGroups.map((g) => (
+                    <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3">
+                      <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
+                      <RoomGrid
+                        days={[dayLabels[0]]}
+                        rooms={g.rooms}
+                        bars={g.bars}
+                        onRoomClick={(roomNumber) => {
+                          const room = g.rooms[roomNumber - 1];
+                          setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
+                        }}
+                        zoomLevel={1}
+                        canAct
+                        onAction={handleAction}
+                        summary={false}
+                        fill
+                      />
+                    </section>
+                  ))}
+                </div>
+                <ActivitySummary
+                  bars={bars}
+                  rooms={rooms}
+                  dayLabels={[dayLabels[0]]}
+                  numColumns={1}
+                  title={`Activities — ${viewMode === 'day' && activeDate ? fmtDay(activeDate) : 'today'}`}
+                />
+              </>
             ) : (
               <RoomGrid
                 days={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
