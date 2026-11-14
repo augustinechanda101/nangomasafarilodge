@@ -298,7 +298,7 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
           id: 20000 + b.id,
           tag: 'Awaiting check-in',
           tone: 'warn',
-          text: `${b.guest_name} · ${roomNumber} · expected ${dayLabel(b.expected_arrival)}`,
+          text: `${b.guest_name} · ${roomNumber} · awaiting arrival`,
           action: 'Check in',
           location: locName,
         });
