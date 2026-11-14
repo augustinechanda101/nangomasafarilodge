@@ -52,6 +52,10 @@ export default function CompactDayGrid({ rooms, bars, canAct, onAction, onRoomCl
                 >
                   {bar.label}
                 </button>
+              ) : r.state !== 'Available' ? (
+                <div className="flex-1 truncate rounded bg-ochre-chip px-2 py-1.5 text-xs font-semibold text-ochre-ink">
+                  {r.state === 'hold' ? 'On hold' : r.state === 'maintenance' ? 'Maintenance' : 'Unavailable'}
+                </div>
               ) : (
                 <div className="flex-1 truncate rounded bg-savanna-chip px-2 py-1.5 text-xs font-semibold text-savanna-ink">
                   Free

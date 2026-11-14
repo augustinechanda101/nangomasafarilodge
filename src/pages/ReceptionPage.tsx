@@ -71,10 +71,12 @@ export default function ReceptionPage() {
   const [bars, setBars] = useState<GridBar[]>([]);
 
   // Availability per location for the current window, incl. family rooms
+  // (hold/maintenance/unavailable rooms are not bookable, so not free)
   const locationInfo = locations.map((l) => {
-    const free = l.rooms.filter((r) => !bars.some((b) => rooms[b.room - 1]?.name === r.name)).length;
+    const isFree = (r: GridRoom) => r.state === 'Available' && !bars.some((b) => rooms[b.room - 1]?.name === r.name);
+    const free = l.rooms.filter(isFree).length;
     const familyRooms = l.rooms.filter((r) => r.type === 'Family Room');
-    const familyFree = familyRooms.filter((r) => !bars.some((b) => rooms[b.room - 1]?.name === r.name)).length;
+    const familyFree = familyRooms.filter(isFree).length;
     return { name: l.name, free, total: l.rooms.length, familyFree, familyTotal: familyRooms.length };
   });
   const [alerts, setAlerts] = useState<AlertItem[]>([]);

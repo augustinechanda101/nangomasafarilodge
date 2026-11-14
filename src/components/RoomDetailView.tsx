@@ -18,8 +18,6 @@ const STATUS: Record<BarKind, string> = {
 
 const STATE_CHIP: Record<string, string> = {
   Available: 'bg-savanna-chip text-savanna-ink',
-  needs_inspection: 'bg-brick-chip text-brick-ink',
-  awaiting_cleaning: 'bg-ochre-chip text-ochre-ink',
   hold: 'bg-ochre text-sand-card',
   maintenance: 'bg-brick-ink text-sand-card',
   unavailable: 'bg-bark-deep text-sand-card',
@@ -27,8 +25,6 @@ const STATE_CHIP: Record<string, string> = {
 
 const STATE_LABEL: Record<string, string> = {
   Available: 'Available',
-  needs_inspection: 'Needs inspection',
-  awaiting_cleaning: 'Awaiting cleaning',
   hold: 'On hold — awaiting payment',
   maintenance: 'Maintenance',
   unavailable: 'Unavailable',

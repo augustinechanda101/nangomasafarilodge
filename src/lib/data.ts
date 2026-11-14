@@ -207,19 +207,5 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
     }
   }
 
-  const { data: rooms } = await supabase
-    .from('rooms')
-    .select('id, number, housekeeping, locations ( name )')
-    .in('housekeeping', ['needs_inspection', 'awaiting_cleaning']);
-  for (const r of rooms ?? []) {
-    alerts.push({
-      id: 30000 + r.id,
-      tag: r.housekeeping === 'needs_inspection' ? 'Needs inspection' : 'Awaiting cleaning',
-      tone: 'warn',
-      text: `${r.number} · ${(r.locations as unknown as { name: string } | null)?.name ?? ''}`,
-      action: r.housekeeping === 'needs_inspection' ? 'Mark ready' : 'Mark cleaned',
-    });
-  }
-
   return alerts;
 }

@@ -14,6 +14,7 @@ export default function VacancyView({ rooms, bars, mode, dayLabels }: Props) {
   const groups = (() => {
     const m = new Map<string, { room: GridRoom; freeDays: number[] }[]>();
     rooms.forEach((r, i) => {
+      if (r.state !== 'Available') return; // hold/maintenance/unavailable rooms are not bookable
       const freeDays: number[] = [];
       if (mode === 'hours') {
         if (!bars.some((b) => b.room - 1 === i)) freeDays.push(0);
