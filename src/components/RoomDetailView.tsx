@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import type { BarKind, GridBar, GridRoom } from '../lib/staffTypes';
+
+const SPINNER = <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />;
 
 const CHIP: Record<BarKind, string> = {
   checkedIn: 'bg-bark-deep text-sand-card',
@@ -43,10 +46,17 @@ interface Props {
 export default function RoomDetailView({
   roomName, roomNumber, room, bars, dayLabels, onSetState, onClose,
 }: Props) {
+  const [busy, setBusy] = useState<string | null>(null);
   const roomBars = bars.filter((b) => b.room === roomNumber);
   const state = room?.state ?? 'Available';
   const canAct = !!onSetState && !!room?.id;
   const isOff = state !== 'Available';
+
+  const applyState = async (next: string) => {
+    setBusy(next);
+    await onSetState?.(next);
+    setBusy(null);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
@@ -97,32 +107,40 @@ export default function RoomDetailView({
             {isOff ? (
               <button
                 type="button"
-                onClick={() => onSetState('ready')}
-                className="min-h-11 rounded-xl bg-savanna-chip px-3.5 text-sm font-semibold text-savanna-ink hover:brightness-95"
+                onClick={() => applyState('ready')}
+                disabled={busy !== null}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-savanna-chip px-3.5 text-sm font-semibold text-savanna-ink hover:brightness-95 disabled:opacity-70"
               >
+                {busy === 'ready' ? SPINNER : null}
                 Mark Available
               </button>
             ) : (
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => onSetState('hold')}
-                  className="min-h-11 flex-1 rounded-xl bg-ochre px-3.5 text-sm font-semibold text-sand-card hover:bg-bark-deep"
+                  onClick={() => applyState('hold')}
+                  disabled={busy !== null}
+                  className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-ochre px-3.5 text-sm font-semibold text-sand-card hover:bg-bark-deep disabled:opacity-70"
                 >
+                  {busy === 'hold' ? SPINNER : null}
                   Hold
                 </button>
                 <button
                   type="button"
-                  onClick={() => onSetState('maintenance')}
-                  className="min-h-11 flex-1 rounded-xl bg-brick-ink px-3.5 text-sm font-semibold text-sand-card hover:brightness-110"
+                  onClick={() => applyState('maintenance')}
+                  disabled={busy !== null}
+                  className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-brick-ink px-3.5 text-sm font-semibold text-sand-card hover:brightness-110 disabled:opacity-70"
                 >
+                  {busy === 'maintenance' ? SPINNER : null}
                   Maintenance
                 </button>
                 <button
                   type="button"
-                  onClick={() => onSetState('unavailable')}
-                  className="min-h-11 flex-1 rounded-xl bg-bark-deep px-3.5 text-sm font-semibold text-sand-card hover:bg-bark"
+                  onClick={() => applyState('unavailable')}
+                  disabled={busy !== null}
+                  className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-bark-deep px-3.5 text-sm font-semibold text-sand-card hover:bg-bark disabled:opacity-70"
                 >
+                  {busy === 'unavailable' ? SPINNER : null}
                   Unavailable
                 </button>
               </div>

@@ -1,7 +1,21 @@
+import { useState } from 'react';
 import type { AlertItem } from '../lib/staffTypes';
 
-export default function AlertCard({ item, onAction }: { item: AlertItem; onAction: (id: number) => void }) {
+interface Props {
+  item: AlertItem;
+  onAction: (id: number) => void | Promise<void>;
+}
+
+export default function AlertCard({ item, onAction }: Props) {
+  const [busy, setBusy] = useState(false);
   const chip = item.tone === 'bad' ? 'bg-brick-chip text-brick-ink' : 'bg-ochre-chip text-ochre-ink';
+
+  const act = async () => {
+    setBusy(true);
+    await onAction(item.id);
+    setBusy(false);
+  };
+
   return (
     <div className="flex flex-1 flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card px-3.5 py-3">
       <div className="flex items-center justify-between gap-2">
@@ -13,9 +27,11 @@ export default function AlertCard({ item, onAction }: { item: AlertItem; onActio
       <p className="text-sm">{item.text}</p>
       <button
         type="button"
-        onClick={() => onAction(item.id)}
-        className="min-h-10 rounded-xl bg-bark-deep px-3.5 text-sm font-semibold text-sand-card hover:bg-bark"
+        onClick={act}
+        disabled={busy}
+        className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-bark-deep px-3.5 text-sm font-semibold text-sand-card hover:bg-bark disabled:opacity-70"
       >
+        {busy && <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
         {item.action}
       </button>
     </div>
