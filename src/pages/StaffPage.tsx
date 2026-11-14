@@ -66,6 +66,13 @@ export default function StaffPage() {
 
   const [bars, setBars] = useState<GridBar[]>([]);
 
+  // Available rooms per location for the current window
+  const availableByLocation = locations.map((l) => ({
+    name: l.name,
+    free: l.rooms.filter((r) => !bars.some((b) => rooms[b.room - 1]?.name === r.name)).length,
+    total: l.rooms.length,
+  }));
+
   // Per-location sub-grids for the compact one-day view (re-indexed bars)
   const locationGroups = locations.map((l) => {
     const subIndex = new Map(l.rooms.map((r, i) => [r.name, i]));
@@ -259,6 +266,10 @@ export default function StaffPage() {
                   ? `Rooms, ${fmtDay(activeDate)}`
                   : 'Monthly View'}
               </h3>
+              <span className="text-[13px] font-semibold text-savanna-ink">
+                {viewMode !== 'monthly' &&
+                  availableByLocation.map((a) => `${a.name} ${a.free}/${a.total}`).join(' · ')}
+              </span>
               <span className="text-[13px] text-bark-muted">
                 {showVacancy && viewMode !== 'monthly'
                   ? 'Rooms free in this period'
