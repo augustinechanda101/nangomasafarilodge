@@ -7,7 +7,6 @@ import AlertCard from '../components/AlertCard';
 import RoomGrid from '../components/RoomGrid';
 import RoomDetailView from '../components/RoomDetailView';
 import MonthlyGrid from '../components/MonthlyGrid';
-import VacancyView from '../components/VacancyView';
 import FinanceCard from '../components/FinanceCard';
 import ActivitySummary from '../components/ActivitySummary';
 import CompactDayGrid from '../components/CompactDayGrid';
@@ -43,7 +42,6 @@ export default function ReceptionPage() {
   const [openDates, setOpenDates] = useState<string[]>([]);
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const [location, setLocation] = useState<string>('all');
-  const [showVacancy, setShowVacancy] = useState(false);
 
   // Start empty (no sample flash); sample data only as fallback on fetch failure
   const [locations, setLocations] = useState<LocationWithRooms[]>([]);
@@ -142,7 +140,6 @@ export default function ReceptionPage() {
   };
 
   const openDate = (dateStr: string) => {
-    setShowVacancy(false);
     setOpenDates((p) => (p.includes(dateStr) ? p : [...p, dateStr]));
     setActiveDate(dateStr);
     setViewMode('day');
@@ -225,7 +222,6 @@ export default function ReceptionPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
-              setShowVacancy(false);
               setViewMode('today');
             }}
             className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${
@@ -250,7 +246,6 @@ export default function ReceptionPage() {
           </button>
           <button
             onClick={() => {
-              setShowVacancy(false);
               setViewMode('monthly');
             }}
             className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${
@@ -261,28 +256,6 @@ export default function ReceptionPage() {
           >
             Monthly View
           </button>
-          {viewMode === 'overview' && (
-            <div className="flex rounded-xl bg-bark-soft p-0.5 ml-1">
-              <button
-                type="button"
-                onClick={() => setShowVacancy(false)}
-                className={`min-h-10 rounded-lg px-3 text-sm font-semibold transition-colors ${
-                  !showVacancy ? 'bg-sand-card text-bark shadow-sm' : 'text-bark-muted hover:text-bark'
-                }`}
-              >
-                Grid
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowVacancy(true)}
-                className={`min-h-10 rounded-lg px-3 text-sm font-semibold transition-colors ${
-                  showVacancy ? 'bg-savanna-chip text-savanna-ink shadow-sm' : 'text-bark-muted hover:text-bark'
-                }`}
-              >
-                Vacancy
-              </button>
-            </div>
-          )}
           {openDates.map((d) => {
             const isActive = viewMode === 'day' && activeDate === d;
             return (
@@ -381,13 +354,6 @@ export default function ReceptionPage() {
                 rooms={rooms}
                 selected={activeDate}
                 onDateSelect={openDate}
-              />
-            ) : showVacancy ? (
-              <VacancyView
-                rooms={rooms}
-                bars={bars}
-                mode="days"
-                dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
               />
             ) : splitByLocation ? (
               /* One-day views on All Locations: info above each panel, panels side by side */
