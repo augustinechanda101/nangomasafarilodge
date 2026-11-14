@@ -9,6 +9,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS department TEXT NOT NULL DEFAULT 'rec
 UPDATE users SET department = 'management' WHERE role = 'gm';
 
 -- 2. Employee list readable by any signed-in staff account
+DROP POLICY IF EXISTS "authenticated read users" ON users;
 CREATE POLICY "authenticated read users" ON users
   FOR SELECT USING (auth.role() = 'authenticated');
 
