@@ -18,6 +18,7 @@ const DEPT_LABEL: Record<string, string> = Object.fromEntries(DEPARTMENTS.map((d
 export default function StaffManager() {
   const [staff, setStaff] = useState<StaffMember[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [deptTab, setDeptTab] = useState<string>('all');
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -51,7 +52,14 @@ export default function StaffManager() {
     load();
   };
 
-  const departments = [...new Set((staff ?? []).map((s) => s.department))];
+  const openForm = () => {
+    setFormOpen(!formOpen);
+    setSaved(null);
+    if (!formOpen && deptTab !== 'all') setDept(deptTab);
+  };
+
+  const visible = (staff ?? []).filter((s) => deptTab === 'all' || s.department === deptTab);
+  const countFor = (id: string) => (staff ?? []).filter((s) => s.department === id).length;
 
   return (
     <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
@@ -59,11 +67,36 @@ export default function StaffManager() {
         <h3 className="font-display text-xl font-semibold">Employees</h3>
         <button
           type="button"
-          onClick={() => { setFormOpen(!formOpen); setSaved(null); }}
+          onClick={openForm}
           className="min-h-10 rounded-xl bg-ochre px-3.5 text-sm font-semibold text-sand-card hover:bg-bark-deep"
         >
           {formOpen ? 'Close' : 'Add staff'}
         </button>
+      </div>
+
+      {/* Department tabs */}
+      <div className="mt-3 flex w-fit flex-wrap items-center gap-2 rounded-xl bg-bark-soft p-0.5">
+        <button
+          type="button"
+          onClick={() => setDeptTab('all')}
+          className={`min-h-9 rounded-lg px-3.5 text-sm font-semibold transition-colors ${
+            deptTab === 'all' ? 'bg-sand-card text-bark shadow-sm' : 'text-bark-muted hover:text-bark'
+          }`}
+        >
+          All ({staff?.length ?? 0})
+        </button>
+        {DEPARTMENTS.map((d) => (
+          <button
+            key={d.id}
+            type="button"
+            onClick={() => setDeptTab(d.id)}
+            className={`min-h-9 rounded-lg px-3.5 text-sm font-semibold transition-colors ${
+              deptTab === d.id ? 'bg-sand-card text-bark shadow-sm' : 'text-bark-muted hover:text-bark'
+            }`}
+          >
+            {d.label} ({countFor(d.id)})
+          </button>
+        ))}
       </div>
 
       {formOpen && (
@@ -105,30 +138,27 @@ export default function StaffManager() {
         <div className="flex justify-center py-8">
           <span className="h-7 w-7 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
         </div>
-      ) : staff.length === 0 ? (
-        <p className="mt-3 text-sm text-bark-muted">No staff yet — add the first one</p>
+      ) : visible.length === 0 ? (
+        <p className="mt-3 text-sm text-bark-muted">
+          No {deptTab === 'all' ? '' : `${DEPT_LABEL[deptTab]?.toLowerCase() ?? deptTab} `}staff yet
+        </p>
       ) : (
-        departments.map((d) => (
-          <div key={d} className="mt-4">
-            <h4 className="text-[13px] font-semibold uppercase tracking-wide text-bark-muted">
-              {DEPT_LABEL[d] ?? d} <span className="normal-case">({staff.filter((s) => s.department === d).length})</span>
-            </h4>
-            {staff.filter((s) => s.department === d).map((m) => (
-              <div key={m.id} className="flex flex-wrap items-center gap-x-3 border-t border-sand-line py-2.5">
-                <span className="font-semibold">{m.name}</span>
-                <span className="text-[13px] text-bark-muted">{m.email}</span>
-                <span className="ml-auto rounded-full bg-bark-soft px-2.5 py-1 text-xs font-semibold text-bark">
-                  {DEPT_LABEL[m.department] ?? m.department}
-                </span>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                  m.status === 'approved' ? 'bg-savanna-chip text-savanna-ink' : 'bg-brick-chip text-brick-ink'
-                }`}>
-                  {m.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        ))
+        <div className="mt-2">
+          {visible.map((m) => (
+            <div key={m.id} className="flex flex-wrap items-center gap-x-3 border-t border-sand-line py-2.5">
+              <span className="font-semibold">{m.name}</span>
+              <span className="text-[13px] text-bark-muted">{m.email}</span>
+              <span className="ml-auto rounded-full bg-bark-soft px-2.5 py-1 text-xs font-semibold text-bark">
+                {DEPT_LABEL[m.department] ?? m.department}
+              </span>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                m.status === 'approved' ? 'bg-savanna-chip text-savanna-ink' : 'bg-brick-chip text-brick-ink'
+              }`}>
+                {m.status}
+              </span>
+            </div>
+          ))}
+        </div>
       )}
     </section>
   );
