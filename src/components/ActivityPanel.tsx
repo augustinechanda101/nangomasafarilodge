@@ -96,14 +96,23 @@ export default function ActivityPanel() {
           <p className="py-3 text-sm text-bark-muted">No activity in this period</p>
         ) : (
           <div className="flex flex-col">
-            {entries.map((e) => (
-              <div key={e.id} className="flex items-baseline gap-3 border-t border-sand-line py-2.5 first:border-t-0">
-                <span className="w-24 shrink-0 text-[13px] font-semibold text-bark-muted">
-                  {e.date === today ? 'Today' : e.date.slice(5)} {e.time}
-                </span>
-                <span className="text-sm">{e.text}</span>
-              </div>
-            ))}
+            {entries.map((e) => {
+              const m = e.text.match(/ — by (.+)$/);
+              const text = m ? e.text.replace(/ — by .+$/, '') : e.text;
+              return (
+                <div key={e.id} className="flex items-baseline gap-3 border-t border-sand-line py-2.5 first:border-t-0">
+                  <span className="w-24 shrink-0 text-[13px] font-semibold text-bark-muted">
+                    {e.date === today ? 'Today' : e.date.slice(5)} {e.time}
+                  </span>
+                  <span className="text-sm">{text}</span>
+                  {m && (
+                    <span className="ml-auto shrink-0 rounded-full bg-ochre-chip px-2.5 py-0.5 text-[11px] font-semibold text-ochre-ink">
+                      by {m[1]}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

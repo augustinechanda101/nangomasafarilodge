@@ -45,15 +45,24 @@ export default function LogsView({ date, onDateChange, logs, loading }: Props) {
           ) : logs.length === 0 ? (
             <p className="text-sm text-bark-muted">No activity logged on this date</p>
           ) : (
-            logs.map((e, i) => (
-              <div
-                key={`${e.time}-${i}`}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs ${TONE[e.tone]}`}
-              >
-                <span className="w-14 shrink-0 font-semibold">{e.time}</span>
-                <span className="flex-1">{e.text}</span>
-              </div>
-            ))
+            logs.map((e, i) => {
+              const m = e.text.match(/ — by (.+)$/);
+              const text = m ? e.text.replace(/ — by .+$/, '') : e.text;
+              return (
+                <div
+                  key={`${e.time}-${i}`}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs ${TONE[e.tone]}`}
+                >
+                  <span className="w-14 shrink-0 font-semibold">{e.time}</span>
+                  <span className="flex-1">{text}</span>
+                  {m && (
+                    <span className="shrink-0 rounded-full bg-sand-card px-2 py-0.5 text-[11px] font-semibold text-bark">
+                      by {m[1]}
+                    </span>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>
