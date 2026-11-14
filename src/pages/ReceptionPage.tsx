@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ALERTS, GRID_BARS, LOCATIONS } from '../lib/sampleStaff';
 import { bookingAction, fetchAlerts, fetchLocationsWithRooms, fetchWindowBars, setRoomState, type LocationWithRooms } from '../lib/data';
@@ -89,6 +89,8 @@ export default function ReceptionPage() {
   const splitByLocation = isOneDay && location === 'all' && locations.length > 1;
 
   const [bars, setBars] = useState<GridBar[]>([]);
+  const [barsLoading, setBarsLoading] = useState(false);
+  const lastWindowRef = useRef('');
 
   // Availability per location for the current window, incl. family rooms
   // (hold/maintenance/unavailable rooms are not bookable, so not free)
@@ -140,13 +142,22 @@ export default function ReceptionPage() {
   const loadBars = useCallback(() => {
     const windowStart = viewMode === 'day' && activeDate ? activeDate : localISO(new Date());
     const windowDays = viewMode === 'overview' ? numColumns : 1;
+    // Veil only when the VIEWED WINDOW changes (open a day, switch view/location) —
+    // action refreshes (check-in etc.) update silently without a flash
+    const key = `${windowStart}|${windowDays}|${location}`;
+    if (lastWindowRef.current !== key) setBarsLoading(true);
+    lastWindowRef.current = key;
     fetchWindowBars(windowStart, windowDays, roomIndexById)
-      .then((next) => setBars(next))
+      .then((next) => {
+        setBars(next);
+        setBarsLoading(false);
+      })
       .catch((e) => {
         console.error('bars fetch failed', e);
         setBars(GRID_BARS);
+        setBarsLoading(false);
       });
-  }, [viewMode, activeDate, numColumns, roomIndexById]);
+  }, [viewMode, activeDate, numColumns, roomIndexById, location]);
 
   useEffect(() => {
     loadBars();
@@ -407,7 +418,8 @@ export default function ReceptionPage() {
                 </button>
               </div>
             )}
-            {viewMode === 'monthly' ? (
+            <div className="relative">
+              {viewMode === 'monthly' ? (
               <MonthlyGrid
                 rooms={rooms}
                 selected={activeDate}
@@ -498,6 +510,12 @@ export default function ReceptionPage() {
                 </section>
               </div>
             )}
+              {barsLoading && viewMode !== 'monthly' && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-sand/60">
+                  <span className="h-8 w-8 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
+                </div>
+              )}
+            </div>
 
             {(viewMode === 'today' || viewMode === 'day') && <Legend />}
 

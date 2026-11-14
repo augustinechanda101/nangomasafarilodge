@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LOCATIONS } from '../lib/sampleStaff';
 import { fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
 import type { GridBar, GridRoom } from '../lib/staffTypes';
@@ -84,6 +84,8 @@ export default function StaffPage() {
   const splitByLocation = isOneDay && location === 'all' && locations.length > 1;
 
   const [bars, setBars] = useState<GridBar[]>([]);
+  const [barsLoading, setBarsLoading] = useState(false);
+  const lastWindowRef = useRef('');
 
   // Availability per location for the current window, incl. family rooms
   // (hold/maintenance/unavailable rooms are not bookable, so not free)
@@ -121,10 +123,16 @@ export default function StaffPage() {
   const loadBars = useCallback(() => {
     const windowStart = viewMode === 'day' && activeDate ? activeDate : localISO(new Date());
     const windowDays = viewMode === 'overview' ? numColumns : 1;
+    const key = `${windowStart}|${windowDays}|${location}`;
+    if (lastWindowRef.current !== key) setBarsLoading(true);
+    lastWindowRef.current = key;
     fetchWindowBars(windowStart, windowDays, roomIndexById)
-      .then((next) => setBars(next))
+      .then((next) => {
+        setBars(next);
+        setBarsLoading(false);
+      })
       .catch((e) => console.error('bars fetch failed', e));
-  }, [viewMode, activeDate, numColumns, roomIndexById]);
+  }, [viewMode, activeDate, numColumns, roomIndexById, location]);
 
   useEffect(() => {
     loadBars();
@@ -296,7 +304,8 @@ export default function StaffPage() {
                 </span>
               </div>
             )}
-            {viewMode === 'monthly' ? (
+            <div className="relative">
+              {viewMode === 'monthly' ? (
               <MonthlyGrid
                 rooms={rooms}
                 selected={activeDate}
@@ -381,6 +390,12 @@ export default function StaffPage() {
                 </section>
               </div>
             )}
+              {barsLoading && viewMode !== 'monthly' && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-sand/60">
+                  <span className="h-8 w-8 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
+                </div>
+              )}
+            </div>
 
             {(viewMode === 'today' || viewMode === 'day') && <Legend />}
 
