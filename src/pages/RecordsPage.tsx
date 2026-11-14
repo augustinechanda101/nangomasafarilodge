@@ -1,12 +1,19 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import RecordsView from '../components/RecordsView';
 import FinanceCard from '../components/FinanceCard';
-import { sampleRecords } from '../lib/sampleStaff';
+import { fetchRecords } from '../lib/data';
+import type { BookingRecord } from '../lib/staffTypes';
 import StaffHeader from '../components/StaffHeader';
 
 export default function RecordsPage() {
-  const records = useMemo(() => sampleRecords(), []);
+  const [records, setRecords] = useState<BookingRecord[]>([]);
+
+  useEffect(() => {
+    fetchRecords()
+      .then(setRecords)
+      .catch((e) => console.error('records fetch failed', e));
+  }, []);
 
   return (
     <div className="min-h-screen bg-sand font-sans text-bark">

@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FinanceCard from '../components/FinanceCard';
 import RecordsView from '../components/RecordsView';
-import { sampleRecords } from '../lib/sampleStaff';
+import { fetchRecords } from '../lib/data';
+import type { BookingRecord } from '../lib/staffTypes';
 import StaffHeader from '../components/StaffHeader';
 
 function localISO(d: Date): string {
@@ -22,10 +23,17 @@ const PERIODS: { id: Period; label: string }[] = [
 ];
 
 export default function FinancePage() {
-  const records = useMemo(() => sampleRecords(), []);
+  const [records, setRecords] = useState<BookingRecord[]>([]);
   const [period, setPeriod] = useState<Period>('today');
   const [customFrom, setCustomFrom] = useState(localISO(new Date(Date.now() - 6 * 86_400_000)));
   const [customTo, setCustomTo] = useState(localISO(new Date()));
+
+  useEffect(() => {
+    fetchRecords()
+      .then(setRecords)
+      .catch((e) => console.error('records fetch failed', e));
+  }, []);
+
   const now = new Date();
   const today = localISO(now);
   const weekStart = localISO(new Date(Date.now() - 6 * 86_400_000));

@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { AlertItem, BookingDraft, GridBar, GridRoom } from './staffTypes';
+import type { AlertItem, BookingDraft, BookingRecord, GridBar, GridRoom } from './staffTypes';
 
 export interface LocationWithRooms {
   id: number;
@@ -138,7 +138,39 @@ export async function fetchWindowBars(
   return bars;
 }
 
-// Desk actions on a booking: update status + timestamps + write the log
+// Real booking records from the DB (empty until bookings exist)
+export async function fetchRecords(): Promise<BookingRecord[]> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('id, invoice, guest_name, guest_phone, status, expected_arrival, checkout_at, stays (room_id, rooms ( number, locations ( name ) )), payments (amount, method, voided)')
+    .neq('status', 'cancelled')
+    .order('expected_arrival', { ascending: false });
+  if (error) throw error;
+
+  const records: BookingRecord[] = [];
+  for (const b of data ?? []) {
+    for (const stay of b.stays ?? []) {
+      const room = stay.rooms?.[0];
+      const p = (b.payments ?? []).find((x) => !x.voided);
+      const nights = Math.max(1, Math.round(
+        (new Date(b.checkout_at).getTime() - new Date(b.expected_arrival).getTime()) / DAY_MS,
+      ));
+      records.push({
+        guest: b.guest_name,
+        phone: b.guest_phone ?? '',
+        room: room?.number ?? `#${stay.room_id}`,
+        location: room?.locations?.[0]?.name ?? '',
+        checkIn: b.expected_arrival.slice(0, 10),
+        nights,
+        amount: p ? Number(p.amount) : 0,
+        method: p?.method ?? '',
+        invoice: b.invoice ?? '',
+        status: b.status === 'checked_in' ? 'In house' : b.status === 'checked_out' ? 'Completed' : 'Booked',
+      });
+    }
+  }
+  return records;
+}
 export async function bookingAction(verb: string, bookingId: number, label: string): Promise<string | null> {
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = {};
