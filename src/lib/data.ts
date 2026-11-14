@@ -300,7 +300,7 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
           id: 20000 + b.id,
           tag: 'Awaiting check-in',
           tone: 'warn',
-          text: `${b.guest_name} · ${roomNumber} · awaiting arrival`,
+          text: `${b.guest_name} · ${roomNumber} · booked · awaiting arrival`,
           action: 'Check in',
           location: locName,
         });
@@ -318,7 +318,7 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
       id: 30000 + r.id,
       tag: 'Room on hold',
       tone: 'warn',
-      text: `${r.number} · awaiting payment`,
+      text: `${r.number} · held · awaiting payment`,
       action: 'Mark Available',
       location: (r.locations as unknown as { name: string } | null)?.name ?? undefined,
     });
