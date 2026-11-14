@@ -20,6 +20,7 @@ const STATE_CHIP: Record<string, string> = {
   Available: 'bg-savanna-chip text-savanna-ink',
   needs_inspection: 'bg-brick-chip text-brick-ink',
   awaiting_cleaning: 'bg-ochre-chip text-ochre-ink',
+  hold: 'bg-ochre text-sand-card',
   maintenance: 'bg-brick-ink text-sand-card',
   unavailable: 'bg-bark-deep text-sand-card',
 };
@@ -27,7 +28,8 @@ const STATE_CHIP: Record<string, string> = {
 const STATE_LABEL: Record<string, string> = {
   Available: 'Available',
   needs_inspection: 'Needs inspection',
-  awaiting_cleaning: 'Processing',
+  awaiting_cleaning: 'Awaiting cleaning',
+  hold: 'On hold — awaiting payment',
   maintenance: 'Maintenance',
   unavailable: 'Unavailable',
 };
@@ -108,10 +110,10 @@ export default function RoomDetailView({
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => onSetState('awaiting_cleaning')}
-                  className="min-h-11 flex-1 rounded-xl bg-ochre-chip px-3.5 text-sm font-semibold text-ochre-ink hover:brightness-95"
+                  onClick={() => onSetState('hold')}
+                  className="min-h-11 flex-1 rounded-xl bg-ochre px-3.5 text-sm font-semibold text-sand-card hover:bg-bark-deep"
                 >
-                  Processing
+                  Hold
                 </button>
                 <button
                   type="button"
