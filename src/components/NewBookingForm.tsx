@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { BookingDraft } from '../lib/staffTypes';
-import { LOCATIONS } from '../lib/sampleStaff';
 
 interface Props {
+  locations: { name: string; rooms: string[] }[];
   onSave: (draft: BookingDraft) => void;
   onHold: (draft: BookingDraft) => void;
 }
@@ -10,8 +10,6 @@ interface Props {
 const FIELD =
   'min-h-10 w-full rounded-xl border border-bark-field bg-sand-card px-2.5 text-sm text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre';
 const LABEL = 'flex flex-col gap-1 text-[13px] text-bark-muted';
-
-const BOOKABLE_LOCATIONS = LOCATIONS.filter((l) => l.id !== 'all');
 
 // Checkout is always 10:00 AM on the last morning, whatever time the guest arrives.
 function checkoutOf(arrival: string, nights: number): string {
@@ -22,17 +20,16 @@ function checkoutOf(arrival: string, nights: number): string {
   return d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function NewBookingForm({ onSave, onHold }: Props) {
+export default function NewBookingForm({ locations, onSave, onHold }: Props) {
   const [mode, setMode] = useState<'single' | 'multiple'>('single');
   const [d, setD] = useState<BookingDraft>({
-    location: BOOKABLE_LOCATIONS[0]?.name ?? '',
+    location: locations[0]?.name ?? '',
     guestName: '', phone: '', rooms: [], nights: 1,
     arrival: '', arrivalTime: '', amount: '', method: 'Mobile money', reference: '', invoice: '',
   });
   const set = <K extends keyof BookingDraft>(k: K, v: BookingDraft[K]) => setD((p) => ({ ...p, [k]: v }));
 
-  const locationRooms =
-    BOOKABLE_LOCATIONS.find((l) => l.name === d.location)?.rooms ?? [];
+  const locationRooms = locations.find((l) => l.name === d.location)?.rooms ?? [];
 
   const toggleRoom = (name: string) =>
     set('rooms', d.rooms.includes(name) ? d.rooms.filter((r) => r !== name) : [...d.rooms, name]);
@@ -79,8 +76,8 @@ export default function NewBookingForm({ onSave, onHold }: Props) {
             set('rooms', []);
           }}
         >
-          {BOOKABLE_LOCATIONS.map((l) => (
-            <option key={l.id} value={l.name}>{l.name}</option>
+          {locations.map((l) => (
+            <option key={l.name} value={l.name}>{l.name}</option>
           ))}
         </select>
       </label>
@@ -126,24 +123,24 @@ export default function NewBookingForm({ onSave, onHold }: Props) {
             onChange={(e) => set('rooms', e.target.value ? [e.target.value] : [])}
           >
             <option value="" disabled>Select a room</option>
-            {locationRooms.map((r) => <option key={r.name}>{r.name}</option>)}
+            {locationRooms.map((r) => <option key={r}>{r}</option>)}
           </select>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {locationRooms.map((r) => {
-              const on = d.rooms.includes(r.name);
+              const on = d.rooms.includes(r);
               return (
                 <button
-                  key={r.name}
+                  key={r}
                   type="button"
-                  onClick={() => toggleRoom(r.name)}
+                  onClick={() => toggleRoom(r)}
                   className={`min-h-9 rounded-full px-3 text-xs font-semibold transition-colors ${
                     on
                       ? 'bg-bark-deep text-sand-card'
                       : 'border border-bark-field bg-sand-card text-bark hover:bg-bark-soft'
                   }`}
                 >
-                  {r.name}
+                  {r}
                 </button>
               );
             })}

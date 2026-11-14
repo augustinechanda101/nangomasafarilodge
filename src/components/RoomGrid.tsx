@@ -18,11 +18,11 @@ const LEGEND: [BarKind, string][] = [
   ['inspect', 'Needs inspection'],
 ];
 
-interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean }
+interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean; onAction?: (verb: string, bar: GridBar) => void }
 
 type Row = { kind: 'header'; label: string } | { kind: 'room'; room: GridRoom; roomIndex: number };
 
-export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1, canAct }: Props) {
+export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1, canAct, onAction }: Props) {
   const [activeBar, setActiveBar] = useState<GridBar | null>(null);
 
   // Zoom levels: 1 = 7 days, 2 = 4 days, 3 = 2 days
@@ -216,7 +216,7 @@ export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1
           allBars={bars}
           onSelectBar={setActiveBar}
           canAct={canAct}
-          onAction={(verb, b) => console.log('POST /api/bookings/action', { verb, invoice: b.invoice, room: b.room })}
+          onAction={onAction}
           onClose={() => setActiveBar(null)}
         />
       )}

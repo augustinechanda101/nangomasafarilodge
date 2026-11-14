@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { DAYS, GRID_BARS, LOCATIONS, barsForDate, type LocationId } from '../lib/sampleStaff';
+import { useCallback, useEffect, useState } from 'react';
+import { LOCATIONS } from '../lib/sampleStaff';
+import { fetchDayBars, fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
+import type { GridBar } from '../lib/staffTypes';
 import RoomGrid from '../components/RoomGrid';
 import HourlyGrid from '../components/HourlyGrid';
 import RoomDetailView from '../components/RoomDetailView';
@@ -19,6 +21,13 @@ function localISO(d: Date): string {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
+function nextDayLabels(n: number): string[] {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.now() + i * 86_400_000);
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+  });
+}
+
 // View-only page for general staff (bartenders, etc.) — no booking, no desk actions.
 export default function StaffPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
@@ -27,9 +36,41 @@ export default function StaffPage() {
   const [zoomLevel, setZoomLevel] = useState(1); // 1 = 7 days, 2 = 4 days, 3 = 2 days
   const [openDates, setOpenDates] = useState<string[]>([]);
   const [activeDate, setActiveDate] = useState<string | null>(null);
-  const [location, setLocation] = useState<LocationId>('all');
+  const [location, setLocation] = useState<string>('all');
   const [showVacancy, setShowVacancy] = useState(false);
-  const rooms = LOCATIONS.find((l) => l.id === location)!.rooms;
+
+  const [locations, setLocations] = useState<LocationWithRooms[]>(
+    LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })),
+  );
+
+  useEffect(() => {
+    fetchLocationsWithRooms()
+      .then(setLocations)
+      .catch((e) => console.error('locations fetch failed', e));
+  }, []);
+
+  const rooms = location === 'all'
+    ? locations.flatMap((l) => l.rooms)
+    : locations.find((l) => l.name === location)?.rooms ?? [];
+  const roomIndexByNumber = new Map(rooms.map((r, i) => [r.name, i]));
+  const numColumns = zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2;
+  const dayLabels = nextDayLabels(numColumns);
+
+  const [bars, setBars] = useState<GridBar[]>([]);
+
+  const loadBars = useCallback(() => {
+    const current = viewMode === 'day' && activeDate ? activeDate : selectedDate;
+    const fetch = viewMode === 'overview'
+      ? fetchWindowBars(localISO(new Date()), numColumns, roomIndexByNumber)
+      : fetchDayBars(current, roomIndexByNumber);
+    fetch
+      .then((next) => setBars(next))
+      .catch((e) => console.error('bars fetch failed', e));
+  }, [viewMode, activeDate, selectedDate, numColumns, roomIndexByNumber]);
+
+  useEffect(() => {
+    loadBars();
+  }, [loadBars]);
 
   const openDate = (dateStr: string) => {
     setOpenDates((p) => (p.includes(dateStr) ? p : [...p, dateStr]));
@@ -59,6 +100,7 @@ export default function StaffPage() {
         <StaffHeader
           role="Staff"
           who="[Staff name]"
+          locations={locations}
           location={location}
           onLocationChange={setLocation}
         />
@@ -218,17 +260,12 @@ export default function StaffPage() {
             </div>
             {viewMode === 'overview' ? (
               showVacancy ? (
-                <VacancyView
-                  rooms={rooms}
-                  bars={GRID_BARS}
-                  mode="days"
-                  dayLabels={DAYS.slice(0, zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2)}
-                />
+                <VacancyView rooms={rooms} bars={bars} mode="days" dayLabels={dayLabels} />
               ) : (
                 <RoomGrid
-                  days={DAYS}
+                  days={dayLabels}
                   rooms={rooms}
-                  bars={GRID_BARS}
+                  bars={bars}
                   onRoomClick={(roomNumber) => {
                     const room = rooms[roomNumber - 1];
                     setSelectedRoom({ name: room.name, number: roomNumber });
@@ -238,23 +275,23 @@ export default function StaffPage() {
               )
             ) : viewMode === 'hourly' ? (
               showVacancy ? (
-                <VacancyView rooms={rooms} bars={barsForDate(selectedDate)} mode="hours" />
+                <VacancyView rooms={rooms} bars={bars} mode="hours" />
               ) : (
                 <HourlyGrid
                   date={selectedDate}
                   rooms={rooms}
-                  bookings={barsForDate(selectedDate)}
+                  bookings={bars}
                   onDateChange={openDate}
                 />
               )
             ) : viewMode === 'day' && activeDate ? (
               showVacancy ? (
-                <VacancyView rooms={rooms} bars={barsForDate(activeDate)} mode="hours" />
+                <VacancyView rooms={rooms} bars={bars} mode="hours" />
               ) : (
                 <HourlyGrid
                   date={activeDate}
                   rooms={rooms}
-                  bookings={barsForDate(activeDate)}
+                  bookings={bars}
                   onDateChange={(newD) => {
                     setOpenDates((p) => [...new Set(p.map((x) => (x === activeDate ? newD : x)))]);
                     setActiveDate(newD);
@@ -276,7 +313,7 @@ export default function StaffPage() {
         <RoomDetailView
           roomName={selectedRoom.name}
           roomNumber={selectedRoom.number}
-          bookings={GRID_BARS}
+          bookings={bars}
           onClose={() => setSelectedRoom(null)}
           date={selectedDate}
           onDateChange={setSelectedDate}

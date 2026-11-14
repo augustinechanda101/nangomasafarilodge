@@ -1,17 +1,17 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { LOCATIONS, type LocationId } from '../lib/sampleStaff';
 
 interface Props {
   role: string;
   who: string;
   onLogout?: () => void;
-  location?: LocationId;
-  onLocationChange?: (location: LocationId) => void;
+  locations?: { name: string }[];
+  location?: string;
+  onLocationChange?: (location: string) => void;
   action?: ReactNode;
 }
 
-export default function StaffHeader({ role, who, onLogout, location, onLocationChange, action }: Props) {
+export default function StaffHeader({ role, who, onLogout, locations, location, onLocationChange, action }: Props) {
   return (
     <header className="flex items-start justify-between gap-3">
       <div className="flex flex-col gap-1.5">
@@ -29,16 +29,17 @@ export default function StaffHeader({ role, who, onLogout, location, onLocationC
       </div>
       <div className="flex items-center gap-3">
         {action}
-        {onLocationChange && location && (
+        {onLocationChange && location && locations && (
           <label className="flex items-center gap-2 text-[13px] text-bark-muted">
             Location:
             <select
               value={location}
-              onChange={(e) => onLocationChange(e.target.value as LocationId)}
+              onChange={(e) => onLocationChange(e.target.value)}
               className="min-h-10 rounded-xl border border-bark-field bg-sand-card px-3 text-sm font-semibold text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre"
             >
-              {LOCATIONS.map((l) => (
-                <option key={l.id} value={l.id}>{l.name}</option>
+              <option value="all">All Locations</option>
+              {locations.map((l) => (
+                <option key={l.name} value={l.name}>{l.name}</option>
               ))}
             </select>
           </label>

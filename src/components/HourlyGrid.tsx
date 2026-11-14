@@ -22,11 +22,12 @@ interface Props {
   bookings: GridBar[];
   onDateChange?: (date: string) => void;
   canAct?: boolean;
+  onAction?: (verb: string, bar: GridBar) => void;
 }
 
 type Row = { kind: 'header'; label: string } | { kind: 'room'; room: GridRoom; roomIndex: number };
 
-export default function HourlyGrid({ date, rooms, bookings, onDateChange, canAct }: Props) {
+export default function HourlyGrid({ date, rooms, bookings, onDateChange, canAct, onAction }: Props) {
   const [condensed, setCondensed] = useState(true);
   const [overnight, setOvernight] = useState(false);
   const [activeBar, setActiveBar] = useState<GridBar | null>(null);
@@ -250,7 +251,7 @@ export default function HourlyGrid({ date, rooms, bookings, onDateChange, canAct
           allBars={bookings}
           onSelectBar={setActiveBar}
           canAct={canAct}
-          onAction={(verb, b) => console.log('POST /api/bookings/action', { verb, invoice: b.invoice, room: b.room })}
+          onAction={onAction}
           onClose={() => setActiveBar(null)}
         />
       )}

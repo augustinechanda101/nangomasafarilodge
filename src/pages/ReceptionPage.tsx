@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ALERTS, DAYS, GRID_BARS, LOCATIONS, barsForDate, type LocationId } from '../lib/sampleStaff';
+import { ALERTS, GRID_BARS, LOCATIONS } from '../lib/sampleStaff';
+import { bookingAction, fetchDayBars, fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
+import type { GridBar } from '../lib/staffTypes';
 import AlertCard from '../components/AlertCard';
 import RoomGrid from '../components/RoomGrid';
 import HourlyGrid from '../components/HourlyGrid';
@@ -22,6 +24,14 @@ function localISO(d: Date): string {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
+// Next N day labels from today, e.g. "Fri 14"
+function nextDayLabels(n: number): string[] {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.now() + i * 86_400_000);
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+  });
+}
+
 export default function ReceptionPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [selectedRoom, setSelectedRoom] = useState<{ name: string; number: number } | null>(null);
@@ -29,9 +39,49 @@ export default function ReceptionPage() {
   const [zoomLevel, setZoomLevel] = useState(1); // 1 = 7 days, 2 = 4 days, 3 = 2 days
   const [openDates, setOpenDates] = useState<string[]>([]);
   const [activeDate, setActiveDate] = useState<string | null>(null);
-  const [location, setLocation] = useState<LocationId>('all');
+  const [location, setLocation] = useState<string>('all');
   const [showVacancy, setShowVacancy] = useState(false);
-  const rooms = LOCATIONS.find((l) => l.id === location)!.rooms;
+
+  // Sample data renders instantly; replaced by Supabase data once loaded
+  const [locations, setLocations] = useState<LocationWithRooms[]>(
+    LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })),
+  );
+
+  useEffect(() => {
+    fetchLocationsWithRooms()
+      .then(setLocations)
+      .catch((e) => console.error('locations fetch failed', e));
+  }, []);
+
+  const rooms = location === 'all'
+    ? locations.flatMap((l) => l.rooms)
+    : locations.find((l) => l.name === location)?.rooms ?? [];
+  const roomIndexByNumber = new Map(rooms.map((r, i) => [r.name, i]));
+  const numColumns = zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2;
+  const dayLabels = nextDayLabels(numColumns);
+
+  const [bars, setBars] = useState<GridBar[]>(GRID_BARS);
+
+  const loadBars = useCallback(() => {
+    const current = viewMode === 'day' && activeDate ? activeDate : selectedDate;
+    const fetch = viewMode === 'overview'
+      ? fetchWindowBars(localISO(new Date()), numColumns, roomIndexByNumber)
+      : fetchDayBars(current, roomIndexByNumber);
+    fetch
+      .then((next) => setBars(next))
+      .catch((e) => console.error('bars fetch failed', e));
+  }, [viewMode, activeDate, selectedDate, numColumns, roomIndexByNumber]);
+
+  useEffect(() => {
+    loadBars();
+  }, [loadBars]);
+
+  const handleAction = async (verb: string, bar: GridBar) => {
+    if (!bar.bookingId) return;
+    const err = await bookingAction(verb, bar.bookingId, bar.label);
+    if (err) console.error('action failed', err);
+    loadBars();
+  };
 
   const openDate = (dateStr: string) => {
     setOpenDates((p) => (p.includes(dateStr) ? p : [...p, dateStr]));
@@ -64,6 +114,7 @@ export default function ReceptionPage() {
         <StaffHeader
           role="Reception"
           who="[Receptionist name]"
+          locations={locations}
           location={location}
           onLocationChange={setLocation}
           action={
@@ -259,50 +310,48 @@ export default function ReceptionPage() {
             </div>
             {viewMode === 'overview' ? (
               showVacancy ? (
-                <VacancyView
-                  rooms={rooms}
-                  bars={GRID_BARS}
-                  mode="days"
-                  dayLabels={DAYS.slice(0, zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2)}
-                />
+                <VacancyView rooms={rooms} bars={bars} mode="days" dayLabels={dayLabels} />
               ) : (
                 <RoomGrid
-                  days={DAYS}
+                  days={dayLabels}
                   rooms={rooms}
-                  bars={GRID_BARS}
+                  bars={bars}
                   onRoomClick={(roomNumber) => {
                     const room = rooms[roomNumber - 1];
                     setSelectedRoom({ name: room.name, number: roomNumber });
                   }}
                   zoomLevel={zoomLevel}
                   canAct
+                  onAction={handleAction}
                 />
               )
             ) : viewMode === 'hourly' ? (
               showVacancy ? (
-                <VacancyView rooms={rooms} bars={barsForDate(selectedDate)} mode="hours" />
+                <VacancyView rooms={rooms} bars={bars} mode="hours" />
               ) : (
                 <HourlyGrid
                   date={selectedDate}
                   rooms={rooms}
-                  bookings={barsForDate(selectedDate)}
+                  bookings={bars}
                   onDateChange={openDate}
                   canAct
+                  onAction={handleAction}
                 />
               )
             ) : viewMode === 'day' && activeDate ? (
               showVacancy ? (
-                <VacancyView rooms={rooms} bars={barsForDate(activeDate)} mode="hours" />
+                <VacancyView rooms={rooms} bars={bars} mode="hours" />
               ) : (
                 <HourlyGrid
                   date={activeDate}
                   rooms={rooms}
-                  bookings={barsForDate(activeDate)}
+                  bookings={bars}
                   onDateChange={(newD) => {
                     setOpenDates((p) => [...new Set(p.map((x) => (x === activeDate ? newD : x)))]);
                     setActiveDate(newD);
                   }}
                   canAct
+                  onAction={handleAction}
                 />
               )
             ) : (
@@ -315,14 +364,10 @@ export default function ReceptionPage() {
 
             {viewMode !== 'monthly' && (
               <FinanceCard
-                items={
-                  viewMode === 'overview'
-                    ? GRID_BARS
-                    : barsForDate(viewMode === 'day' && activeDate ? activeDate : selectedDate)
-                }
+                items={bars}
                 title={
                   viewMode === 'overview'
-                    ? `Financials — next ${zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2} days`
+                    ? `Financials — next ${numColumns} days`
                     : viewMode === 'day' && activeDate
                     ? `Financials — ${fmtDay(activeDate)}`
                     : 'Financials — today'
@@ -337,7 +382,7 @@ export default function ReceptionPage() {
         <RoomDetailView
           roomName={selectedRoom.name}
           roomNumber={selectedRoom.number}
-          bookings={GRID_BARS}
+          bookings={bars}
           onClose={() => setSelectedRoom(null)}
           date={selectedDate}
           onDateChange={setSelectedDate}

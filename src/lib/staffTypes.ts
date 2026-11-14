@@ -1,10 +1,11 @@
 export type BarKind = 'checkedIn' | 'awaiting' | 'hold' | 'overdue' | 'inspect';
 
 export interface GridRoom { name: string; state: string; type?: string; rate?: number; location?: string }
-// room is 1-based; start/end are day indexes (end exclusive); invoice links group bookings
+// room is 1-based; start/end are day indexes (end exclusive); invoice links group bookings;
+// bookingId is the Supabase booking row this bar represents
 export interface GridBar {
   room: number; start: number; end: number; kind: BarKind; label: string;
-  invoice?: string; amount?: number; method?: string;
+  invoice?: string; amount?: number; method?: string; bookingId?: number;
 }
 export interface AlertItem { id: number; tag: string; tone: 'bad' | 'warn'; text: string; action: string; location?: string }
 
