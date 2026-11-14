@@ -263,6 +263,12 @@ export async function setRoomState(roomId: number, housekeeping: string, roomLab
 export async function fetchAlerts(): Promise<AlertItem[]> {
   const now = new Date().toISOString();
   const alerts: AlertItem[] = [];
+  const todayStr = lusakaDate(now);
+  // "Today" when it's today, otherwise just the date — never a time
+  const dayLabel = (iso: string) =>
+    lusakaDate(iso) === todayStr
+      ? 'Today'
+      : new Date(iso).toLocaleDateString('en-GB', { timeZone: 'Africa/Lusaka', day: 'numeric', month: 'short' });
 
   const { data: bookings, error } = await supabase
     .from('bookings')
@@ -281,7 +287,7 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
           id: 10000 + b.id,
           tag: 'Overdue checkout',
           tone: 'bad',
-          text: `${roomLabel} · ${b.guest_name} · checkout was ${new Date(b.checkout_at).toLocaleDateString('en-GB', { timeZone: 'Africa/Lusaka', day: 'numeric', month: 'short' })}`,
+          text: `${roomLabel} · ${b.guest_name} · checkout was ${dayLabel(b.checkout_at)}`,
           action: 'Check out',
         });
       } else if (b.status === 'booked' && b.expected_arrival <= now) {
@@ -289,7 +295,7 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
           id: 20000 + b.id,
           tag: 'Awaiting check-in',
           tone: 'warn',
-          text: `${roomLabel} · ${b.guest_name} · expected ${new Date(b.expected_arrival).toLocaleDateString('en-GB', { timeZone: 'Africa/Lusaka', day: 'numeric', month: 'short' })}`,
+          text: `${roomLabel} · ${b.guest_name} · expected ${dayLabel(b.expected_arrival)}`,
           action: 'Check in',
         });
       }
