@@ -29,24 +29,24 @@ export default function StaffHeader({ role, who, locations, location, onLocation
 
   return (
     <header className="relative flex items-start justify-center gap-3">
-      <div className="flex flex-col items-center gap-1.5">
-        <button
-          type="button"
-          onClick={logout}
-          aria-label="Log out"
-          className="cursor-pointer"
-        >
-          <img
-            src="/nangomalogo.webp"
-            alt="Nangoma Safari Lodge"
-            className="h-20 w-auto rounded-xl transition-opacity hover:opacity-80"
-          />
-        </button>
-        <div className="flex items-center gap-2">
-          <div className="h-[3px] w-10 bg-ochre" />
-          <span className="text-[13px] font-semibold text-bark-muted">{role}</span>
-        </div>
+      {/* Role tag — top-left corner */}
+      <div className="absolute left-0 top-0 flex items-center gap-2">
+        <div className="h-[3px] w-10 bg-ochre" />
+        <span className="text-[13px] font-semibold text-bark-muted">{role}</span>
       </div>
+      {/* Logo — centered, lifted higher */}
+      <button
+        type="button"
+        onClick={logout}
+        aria-label="Log out"
+        className="-mt-4 cursor-pointer"
+      >
+        <img
+          src="/nangomalogo.webp"
+          alt="Nangoma Safari Lodge"
+          className="h-20 w-auto rounded-xl transition-opacity hover:opacity-80"
+        />
+      </button>
       <div className="absolute right-0 top-0 flex items-center gap-3">
         {action}
         {onLocationChange && location && locations && (
