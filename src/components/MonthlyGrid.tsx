@@ -161,7 +161,8 @@ export default function MonthlyGrid({ rooms, onDateSelect, selected }: Props) {
       </div>
 
       {/* Calendar */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="relative">
+        <div className="grid grid-cols-7 gap-1">
         {WEEKDAYS.map((d) => (
           <div
             key={d}
@@ -216,18 +217,20 @@ export default function MonthlyGrid({ rooms, onDateSelect, selected }: Props) {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              {loading ? (
-                <span className="text-[10px] text-bark-muted">…</span>
-              ) : (
-                locOccs.map((s) => (
-                  <span key={s.loc} className="text-[10px] leading-tight text-bark-muted">
-                    {s.loc} {s.occ}/{s.n}
-                  </span>
-                ))
-              )}
+              {locOccs.map((s) => (
+                <span key={s.loc} className="text-[10px] leading-tight text-bark-muted">
+                  {s.loc} {s.occ}/{s.n}
+                </span>
+              ))}
             </button>
           );
         })}
+        </div>
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-sand/60">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
+          </div>
+        )}
       </div>
 
       {/* Legend */}
