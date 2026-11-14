@@ -50,7 +50,7 @@ export default function StaffHeader({ role, who, locations, location, onLocation
       <div className="flex items-center gap-3">
         {action}
         {onLocationChange && location && locations && (
-          <label className="flex items-center gap-2 text-[13px] text-bark-muted">
+          <label className="mr-2 flex items-center gap-2 text-[13px] text-bark-muted">
             Location:
             <select
               value={location}
