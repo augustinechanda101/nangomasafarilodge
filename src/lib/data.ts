@@ -281,7 +281,7 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
           id: 10000 + b.id,
           tag: 'Overdue checkout',
           tone: 'bad',
-          text: `${roomLabel} · ${b.guest_name} · checkout was ${new Date(b.checkout_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`,
+          text: `${roomLabel} · ${b.guest_name} · checkout was ${new Date(b.checkout_at).toLocaleDateString('en-GB', { timeZone: 'Africa/Lusaka', day: 'numeric', month: 'short' })}`,
           action: 'Check out',
         });
       } else if (b.status === 'booked' && b.expected_arrival <= now) {
@@ -289,7 +289,7 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
           id: 20000 + b.id,
           tag: 'Awaiting check-in',
           tone: 'warn',
-          text: `${roomLabel} · ${b.guest_name} · expected ${new Date(b.expected_arrival).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`,
+          text: `${roomLabel} · ${b.guest_name} · expected ${new Date(b.expected_arrival).toLocaleDateString('en-GB', { timeZone: 'Africa/Lusaka', day: 'numeric', month: 'short' })}`,
           action: 'Check in',
         });
       }
