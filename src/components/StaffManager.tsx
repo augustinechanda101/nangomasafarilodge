@@ -22,7 +22,7 @@ export default function StaffManager() {
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('nangoma2026');
   const [dept, setDept] = useState<string>('reception');
   const [busy, setBusy] = useState(false);
   const [rowBusy, setRowBusy] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export default function StaffManager() {
       return;
     }
     setSaved(`${name.trim()} added — they can sign in with their email and password`);
-    setName(''); setEmail(''); setPassword('');
+    setName(''); setEmail(''); setPassword('nangoma2026');
     load();
   };
 
@@ -141,7 +141,7 @@ export default function StaffManager() {
             <label className={LABEL}>Email (their login)
               <input className={FIELD} type="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </label>
-            <label className={LABEL}>Password (min 6 characters)
+            <label className={LABEL}>Password (default: nangoma2026 — they can change it later)
               <input className={FIELD} type="text" autoComplete="off" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </label>
             <label className={LABEL}>Department

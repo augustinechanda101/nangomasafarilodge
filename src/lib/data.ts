@@ -481,7 +481,19 @@ export async function addStaff(input: {
   });
   if (error) return error.message;
   const res = data as { error?: string } | null;
-  return res?.error ?? null;
+  if (res?.error) return res.error;
+
+  // Welcome email via the send-staff-welcome edge function (no-op if not deployed yet)
+  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (url && anonKey) {
+    fetch(`${url}/functions/v1/send-staff-welcome`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${anonKey}` },
+      body: JSON.stringify({ name: input.name, email: input.email }),
+    }).catch(() => {});
+  }
+  return null;
 }
 
 // Suspend / reinstate a staff member (GM only, via set_staff_status)
