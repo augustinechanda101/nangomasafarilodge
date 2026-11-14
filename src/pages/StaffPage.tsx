@@ -7,6 +7,7 @@ import RoomDetailView from '../components/RoomDetailView';
 import MonthlyGrid from '../components/MonthlyGrid';
 import VacancyView from '../components/VacancyView';
 import ActivitySummary from '../components/ActivitySummary';
+import CompactDayGrid from '../components/CompactDayGrid';
 import StaffHeader from '../components/StaffHeader';
 
 type ViewMode = 'overview' | 'today' | 'monthly' | 'day';
@@ -289,17 +290,13 @@ export default function StaffPage() {
                   {locationGroups.map((g) => (
                     <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3">
                       <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
-                      <RoomGrid
-                        days={[dayLabels[0]]}
+                      <CompactDayGrid
                         rooms={g.rooms}
                         bars={g.bars}
                         onRoomClick={(roomNumber) => {
                           const room = g.rooms[roomNumber - 1];
                           setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
                         }}
-                        zoomLevel={1}
-                        summary={false}
-                        fill
                       />
                     </section>
                   ))}
