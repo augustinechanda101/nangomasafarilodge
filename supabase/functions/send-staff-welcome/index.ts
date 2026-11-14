@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Supabase Edge Function: sends the staff welcome email via Resend.
 // Deploy: Supabase dashboard → Edge Functions → Create → paste this file → deploy.
 // Secrets needed (dashboard → Edge Functions → Secrets, or `supabase secrets set`):
