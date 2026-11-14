@@ -72,7 +72,7 @@ export default function FinancePage() {
     : 0;
   const dayCount =
     period === 'today'
-      ? 14
+      ? 1
       : period === 'week'
       ? 7
       : period === 'month'
@@ -153,7 +153,7 @@ export default function FinancePage() {
         {/* Per-day records for the period */}
         <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
           <h4 className="mb-3 text-sm font-semibold text-bark">
-            Each day's record — {period === 'today' ? 'last 14 days' : periodLabel.toLowerCase()}
+            Each day's record — {periodLabel.toLowerCase()}
           </h4>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
