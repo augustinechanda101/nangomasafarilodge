@@ -23,8 +23,8 @@ const STATUS: Record<BarKind, string> = {
 const STATE_CHIP: Record<string, string> = {
   Available: 'bg-savanna-chip text-savanna-ink',
   hold: 'bg-ochre text-sand-card',
-  maintenance: 'bg-brick-ink text-sand-card',
-  unavailable: 'bg-bark-deep text-sand-card',
+  maintenance: 'bg-brick-chip text-brick-ink',
+  unavailable: 'bg-bark-soft text-bark',
 };
 
 const STATE_LABEL: Record<string, string> = {

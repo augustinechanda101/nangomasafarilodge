@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { BarKind, GridBar, GridRoom } from '../lib/staffTypes';
 import BookingDetailModal from './BookingDetailModal';
 import ActivitySummary from './ActivitySummary';
+import Legend from './Legend';
 
 const BAR: Record<BarKind, string> = {
   checkedIn: 'bg-bark-deep text-sand-card',
@@ -10,14 +11,6 @@ const BAR: Record<BarKind, string> = {
   overdue: 'bg-brick-ink text-sand-card',
   inspect: 'bg-brick-chip text-brick-ink',
 };
-
-const LEGEND: [BarKind, string][] = [
-  ['checkedIn', 'Checked in'],
-  ['awaiting', 'Awaiting check-in'],
-  ['hold', 'Processing hold'],
-  ['overdue', 'Overdue'],
-  ['inspect', 'Needs inspection'],
-];
 
 interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean; onAction?: (verb: string, bar: GridBar) => void; summary?: boolean; fill?: boolean }
 
@@ -158,8 +151,8 @@ export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1
             if (rowIndex === undefined) return null;
             const cls =
               r.state === 'hold' ? 'bg-ochre text-sand-card'
-              : r.state === 'maintenance' ? 'bg-brick-ink text-sand-card'
-              : 'bg-bark-deep text-sand-card';
+              : r.state === 'maintenance' ? 'bg-brick-chip text-brick-ink'
+              : 'bg-bark-soft text-bark';
             const label =
               r.state === 'hold' ? 'On hold — awaiting payment'
               : r.state === 'maintenance' ? 'Maintenance'
@@ -187,13 +180,7 @@ export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1
         />
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {LEGEND.map(([kind, label]) => (
-          <span key={kind} className={`rounded-full px-2.5 py-1 text-xs font-semibold ${BAR[kind]}`}>
-            {label}
-          </span>
-        ))}
-      </div>
+      <Legend />
 
       {activeBar && (
         <BookingDetailModal

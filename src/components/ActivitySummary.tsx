@@ -29,8 +29,8 @@ export default function ActivitySummary({ bars, rooms, dayLabels, numColumns, ti
       key: `state-${r.id ?? r.name}`,
       cls:
         r.state === 'hold' ? 'bg-ochre text-sand-card'
-        : r.state === 'maintenance' ? 'bg-brick-ink text-sand-card'
-        : 'bg-bark-deep text-sand-card',
+        : r.state === 'maintenance' ? 'bg-brick-chip text-brick-ink'
+        : 'bg-bark-soft text-bark',
       label:
         r.state === 'hold' ? 'On hold — awaiting payment'
         : r.state === 'maintenance' ? 'Maintenance'

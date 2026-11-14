@@ -10,6 +10,7 @@ import MonthlyGrid from '../components/MonthlyGrid';
 import FinanceCard from '../components/FinanceCard';
 import ActivitySummary from '../components/ActivitySummary';
 import CompactDayGrid from '../components/CompactDayGrid';
+import Legend from '../components/Legend';
 import LoadingScreen from '../components/LoadingScreen';
 import StaffHeader from '../components/StaffHeader';
 
@@ -447,6 +448,8 @@ export default function ReceptionPage() {
                 </section>
               </div>
             )}
+
+            {(viewMode === 'today' || viewMode === 'day') && <Legend />}
 
             {viewMode !== 'monthly' && (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

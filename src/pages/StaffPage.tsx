@@ -7,6 +7,7 @@ import RoomDetailView from '../components/RoomDetailView';
 import MonthlyGrid from '../components/MonthlyGrid';
 import ActivitySummary from '../components/ActivitySummary';
 import CompactDayGrid from '../components/CompactDayGrid';
+import Legend from '../components/Legend';
 import LoadingScreen from '../components/LoadingScreen';
 import StaffHeader from '../components/StaffHeader';
 
@@ -352,6 +353,8 @@ export default function StaffPage() {
                 </section>
               </div>
             )}
+
+            {(viewMode === 'today' || viewMode === 'day') && <Legend />}
 
             {viewMode !== 'monthly' && (
               <ActivitySummary
