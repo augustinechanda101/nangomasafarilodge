@@ -35,17 +35,19 @@ export default function FinanceView({ records }: { records: BookingRecord[] }) {
   const lastMonthPrefix = localISO(lastMonthDate).slice(0, 7);
 
   const customValid = customFrom !== '' && customTo !== '' && customFrom <= customTo;
+  // checkIn carries a time ("2026-11-14 19:12") — compare the DATE part only
+  const dayOf = (r: BookingRecord) => r.checkIn.slice(0, 10);
   const periodRecords =
     period === 'today'
-      ? records.filter((r) => r.checkIn === today)
+      ? records.filter((r) => dayOf(r) === today)
       : period === 'week'
-      ? records.filter((r) => r.checkIn >= weekStart && r.checkIn <= today)
+      ? records.filter((r) => dayOf(r) >= weekStart && dayOf(r) <= today)
       : period === 'month'
-      ? records.filter((r) => r.checkIn.slice(0, 7) === monthPrefix)
+      ? records.filter((r) => dayOf(r).slice(0, 7) === monthPrefix)
       : period === 'lastmonth'
-      ? records.filter((r) => r.checkIn.slice(0, 7) === lastMonthPrefix)
+      ? records.filter((r) => dayOf(r).slice(0, 7) === lastMonthPrefix)
       : customValid
-      ? records.filter((r) => r.checkIn >= customFrom && r.checkIn <= customTo)
+      ? records.filter((r) => dayOf(r) >= customFrom && dayOf(r) <= customTo)
       : [];
   const periodLabel =
     period === 'custom'
@@ -81,7 +83,7 @@ export default function FinanceView({ records }: { records: BookingRecord[] }) {
         ? new Date(new Date(customFrom + 'T00:00:00').getTime() + i * 86_400_000)
         : new Date(Date.now() - (dayCount - 1 - i) * 86_400_000);
     const dateStr = localISO(d);
-    const rs = records.filter((r) => r.checkIn === dateStr);
+    const rs = records.filter((r) => dayOf(r) === dateStr);
     const byMethod = (m: string) => rs.filter((r) => r.method === m).reduce((a, r) => a + r.amount, 0);
     return {
       date: dateStr,
