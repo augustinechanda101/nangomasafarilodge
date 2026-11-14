@@ -8,6 +8,8 @@ interface Props {
   initialDate?: string;
   onSave: (draft: BookingDraft) => void;
   onHold: (draft: BookingDraft) => void;
+  onSaveAndCheckIn?: (draft: BookingDraft) => void;
+  busy?: boolean;
 }
 
 const FIELD =
@@ -29,7 +31,7 @@ function checkoutOf(arrival: string, nights: number): string {
   return d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function NewBookingForm({ locations, initialLocation, initialRoom, initialDate, onSave, onHold }: Props) {
+export default function NewBookingForm({ locations, initialLocation, initialRoom, initialDate, onSave, onHold, onSaveAndCheckIn, busy }: Props) {
   const [mode, setMode] = useState<'single' | 'multiple'>('single');
   const [d, setD] = useState<BookingDraft>({
     location: initialLocation ?? locations[0]?.name ?? '',
@@ -218,14 +220,31 @@ export default function NewBookingForm({ locations, initialLocation, initialRoom
       <div className="col-span-full flex flex-wrap gap-2.5">
         <button
           type="submit"
-          disabled={!canSave}
+          disabled={!canSave || busy}
           className="min-h-11 flex-1 rounded-xl bg-bark-deep px-3.5 text-sm font-semibold text-sand-card hover:bg-bark disabled:cursor-not-allowed disabled:bg-bark-off disabled:text-bark-offink"
         >
           Save booking{d.rooms.length > 1 ? `s (${d.rooms.length} rooms)` : ''}
         </button>
+        {d.arrival === localISO(new Date()) && (
+          <button
+            type="button"
+            disabled={!canSave || busy}
+            onClick={() => {
+              if (onSaveAndCheckIn) {
+                onSaveAndCheckIn(d);
+                reset();
+                setSaved(true);
+                setTimeout(() => setSaved(false), 2500);
+              }
+            }}
+            className="min-h-11 flex-1 rounded-xl bg-ochre px-3.5 text-sm font-semibold text-sand-card hover:bg-bark-deep disabled:cursor-not-allowed disabled:bg-bark-off disabled:text-bark-offink"
+          >
+            Book & check in{d.rooms.length > 1 ? ` (${d.rooms.length} rooms)` : ''}
+          </button>
+        )}
         <button
           type="button"
-          disabled={!canHold}
+          disabled={!canHold || busy}
           onClick={() => onHold(d)}
           className="min-h-11 flex-1 rounded-xl bg-bark-soft px-3.5 text-sm font-semibold text-bark disabled:cursor-not-allowed disabled:bg-bark-off disabled:text-bark-offink"
         >

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import NewBookingForm from '../components/NewBookingForm';
-import { createBooking, fetchLocationsWithRooms, type LocationWithRooms } from '../lib/data';
+import { bookingAction, createBooking, fetchLocationsWithRooms, type LocationWithRooms } from '../lib/data';
 import { LOCATIONS } from '../lib/sampleStaff';
 
 export default function BookingPage() {
@@ -13,6 +13,7 @@ export default function BookingPage() {
   const [locations, setLocations] = useState<LocationWithRooms[]>([]);
   const [saved, setSaved] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     fetchLocationsWithRooms()
@@ -24,19 +25,53 @@ export default function BookingPage() {
   }, []);
 
   const save = async (draft: Parameters<typeof createBooking>[1]) => {
+    setBusy(true);
     setSaveError(null);
     setSaved(null);
     const loc = locations.find((l) => l.name === draft.location);
     if (!loc || !loc.id) {
       setSaveError('Location not loaded yet — try again in a moment');
+      setBusy(false);
       return;
     }
     const result = await createBooking(loc.id, draft);
+    setBusy(false);
     if ('error' in result && result.error) {
       setSaveError(result.error);
     } else if ('invoice' in result) {
       setSaved(result.invoice);
     }
+  };
+
+  // Walk-in: create the booking and check the guest in, right there and then
+  const saveAndCheckIn = async (draft: Parameters<typeof createBooking>[1]) => {
+    setBusy(true);
+    setSaveError(null);
+    setSaved(null);
+    const loc = locations.find((l) => l.name === draft.location);
+    if (!loc || !loc.id) {
+      setSaveError('Location not loaded yet — try again in a moment');
+      setBusy(false);
+      return;
+    }
+    const result = await createBooking(loc.id, draft);
+    if ('error' in result && result.error) {
+      setSaveError(result.error);
+      setBusy(false);
+      return;
+    }
+    if (!('booking_id' in result)) {
+      setBusy(false);
+      return;
+    }
+    const label = `${draft.rooms.length > 1 ? 'Rooms' : 'Room'} ${draft.rooms.join(', ')} · ${draft.guestName}`;
+    const err = await bookingAction('checkin', result.booking_id, label);
+    setBusy(false);
+    if (err) {
+      setSaveError(`Booking saved (invoice ${result.invoice}) but check-in failed: ${err}`);
+      return;
+    }
+    setSaved(`${result.invoice} — guest checked in`);
   };
 
   return (
@@ -62,6 +97,8 @@ export default function BookingPage() {
           initialDate={initialDate}
           onSave={save}
           onHold={save}
+          onSaveAndCheckIn={saveAndCheckIn}
+          busy={busy}
         />
       </div>
     </div>
