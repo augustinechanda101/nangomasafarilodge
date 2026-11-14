@@ -81,6 +81,11 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
       navigate(`/login?portal=${portal}`, { replace: true });
       return;
     }
+    if (profile && profile.status === 'disabled') {
+      signOut();
+      navigate('/login', { replace: true });
+      return;
+    }
     if (roles && profile && !roles.includes(profile.role)) {
       navigate(homeFor(profile.role), { replace: true });
     }

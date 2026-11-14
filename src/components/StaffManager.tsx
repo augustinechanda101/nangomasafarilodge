@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { addStaff, fetchStaffList, type StaffMember } from '../lib/data';
+import { addStaff, fetchStaffList, setStaffStatus, type StaffMember } from '../lib/data';
 
 const FIELD =
   'min-h-10 w-full rounded-xl border border-bark-field bg-sand-card px-3 text-sm text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre';
@@ -25,8 +25,22 @@ export default function StaffManager() {
   const [password, setPassword] = useState('');
   const [dept, setDept] = useState<string>('reception');
   const [busy, setBusy] = useState(false);
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+
+  const toggleStatus = async (m: StaffMember) => {
+    setRowBusy(m.id);
+    const next = m.status === 'disabled' ? 'approved' : 'disabled';
+    const err = await setStaffStatus(m.id, next);
+    setRowBusy(null);
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError(null);
+    load();
+  };
 
   const load = () =>
     fetchStaffList()
@@ -146,7 +160,9 @@ export default function StaffManager() {
         <div className="mt-2">
           {visible.map((m) => (
             <div key={m.id} className="flex flex-wrap items-center gap-x-3 border-t border-sand-line py-2.5">
-              <span className="font-semibold">{m.name}</span>
+              <span className={`font-semibold ${m.status === 'disabled' ? 'text-bark-muted line-through' : ''}`}>
+                {m.name}
+              </span>
               <span className="text-[13px] text-bark-muted">{m.email}</span>
               <span className="ml-auto rounded-full bg-bark-soft px-2.5 py-1 text-xs font-semibold text-bark">
                 {DEPT_LABEL[m.department] ?? m.department}
@@ -154,8 +170,18 @@ export default function StaffManager() {
               <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                 m.status === 'approved' ? 'bg-savanna-chip text-savanna-ink' : 'bg-brick-chip text-brick-ink'
               }`}>
-                {m.status}
+                {m.status === 'disabled' ? 'suspended' : m.status}
               </span>
+              <button
+                type="button"
+                onClick={() => toggleStatus(m)}
+                disabled={rowBusy === m.id}
+                className="min-h-9 rounded-lg bg-bark-soft px-3 text-xs font-semibold text-bark hover:bg-sand-line disabled:opacity-60"
+              >
+                {rowBusy === m.id
+                  ? <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ochre border-t-transparent align-middle" />
+                  : m.status === 'disabled' ? 'Reinstate' : 'Suspend'}
+              </button>
             </div>
           ))}
         </div>

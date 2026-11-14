@@ -37,15 +37,24 @@ export default function LoginPage() {
       setBusy(false);
       return;
     }
-    // Account's role: users table first, auth metadata as fallback
+    // Account's role + status: users table first, auth metadata as fallback
     const { data: { user } } = await supabase.auth.getUser();
     const meta = user?.user_metadata as { role?: string } | undefined;
     const { data: row } = await supabase
       .from('users')
-      .select('role')
+      .select('role, status')
       .eq('email', email.trim())
       .maybeSingle();
     const role = (row as { role: string } | null)?.role ?? meta?.role ?? null;
+    const status = (row as { status: string } | null)?.status;
+
+    // Suspended accounts are rejected outright
+    if (status === 'disabled') {
+      await signOut();
+      setError('This account has been suspended — contact management.');
+      setBusy(false);
+      return;
+    }
 
     // Portal logins only accept their own role's accounts
     if (portal && role !== portal) {

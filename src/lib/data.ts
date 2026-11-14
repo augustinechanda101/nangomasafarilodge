@@ -363,6 +363,14 @@ export async function addStaff(input: {
   return res?.error ?? null;
 }
 
+// Suspend / reinstate a staff member (GM only, via set_staff_status)
+export async function setStaffStatus(id: string, status: 'approved' | 'disabled'): Promise<string | null> {
+  const { data, error } = await supabase.rpc('set_staff_status', { p_id: id, p_status: status });
+  if (error) return error.message;
+  const res = data as { error?: string } | null;
+  return res?.error ?? null;
+}
+
 export async function fetchGmData(): Promise<GmData> {
   const [roomsRes, bookingsRes, paymentsRes, logsRes] = await Promise.all([
     supabase.from('rooms').select('id, housekeeping'),
