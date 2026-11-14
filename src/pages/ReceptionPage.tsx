@@ -42,15 +42,16 @@ export default function ReceptionPage() {
   const [location, setLocation] = useState<string>('all');
   const [showVacancy, setShowVacancy] = useState(false);
 
-  // Sample data renders instantly; replaced by Supabase data once loaded
-  const [locations, setLocations] = useState<LocationWithRooms[]>(
-    LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })),
-  );
+  // Start empty (no sample flash); sample data only as fallback on fetch failure
+  const [locations, setLocations] = useState<LocationWithRooms[]>([]);
 
   useEffect(() => {
     fetchLocationsWithRooms()
       .then(setLocations)
-      .catch((e) => console.error('locations fetch failed', e));
+      .catch((e) => {
+        console.error('locations fetch failed', e);
+        setLocations(LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })));
+      });
   }, []);
 
   const rooms = location === 'all'
@@ -60,13 +61,16 @@ export default function ReceptionPage() {
   const numColumns = zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2;
   const dayLabels = nextDayLabels(numColumns);
 
-  const [bars, setBars] = useState<GridBar[]>(GRID_BARS);
-  const [alerts, setAlerts] = useState<AlertItem[]>(ALERTS);
+  const [bars, setBars] = useState<GridBar[]>([]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
   const loadAlerts = useCallback(() => {
     fetchAlerts()
       .then(setAlerts)
-      .catch((e) => console.error('alerts fetch failed', e));
+      .catch((e) => {
+        console.error('alerts fetch failed', e);
+        setAlerts(ALERTS);
+      });
   }, []);
 
   useEffect(() => {
@@ -80,7 +84,10 @@ export default function ReceptionPage() {
       : fetchDayBars(current, roomIndexByNumber);
     fetch
       .then((next) => setBars(next))
-      .catch((e) => console.error('bars fetch failed', e));
+      .catch((e) => {
+        console.error('bars fetch failed', e);
+        setBars(GRID_BARS);
+      });
   }, [viewMode, activeDate, selectedDate, numColumns, roomIndexByNumber]);
 
   useEffect(() => {

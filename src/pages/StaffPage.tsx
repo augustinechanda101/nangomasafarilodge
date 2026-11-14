@@ -39,14 +39,15 @@ export default function StaffPage() {
   const [location, setLocation] = useState<string>('all');
   const [showVacancy, setShowVacancy] = useState(false);
 
-  const [locations, setLocations] = useState<LocationWithRooms[]>(
-    LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })),
-  );
+  const [locations, setLocations] = useState<LocationWithRooms[]>([]);
 
   useEffect(() => {
     fetchLocationsWithRooms()
       .then(setLocations)
-      .catch((e) => console.error('locations fetch failed', e));
+      .catch((e) => {
+        console.error('locations fetch failed', e);
+        setLocations(LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })));
+      });
   }, []);
 
   const rooms = location === 'all'

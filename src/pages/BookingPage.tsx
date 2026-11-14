@@ -6,16 +6,17 @@ import { LOCATIONS } from '../lib/sampleStaff';
 import StaffHeader from '../components/StaffHeader';
 
 export default function BookingPage() {
-  const [locations, setLocations] = useState<LocationWithRooms[]>(
-    LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })),
-  );
+  const [locations, setLocations] = useState<LocationWithRooms[]>([]);
   const [saved, setSaved] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLocationsWithRooms()
       .then(setLocations)
-      .catch((e) => console.error('locations fetch failed', e));
+      .catch((e) => {
+        console.error('locations fetch failed', e);
+        setLocations(LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })));
+      });
   }, []);
 
   const save = async (draft: Parameters<typeof createBooking>[1]) => {
