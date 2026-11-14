@@ -5,6 +5,7 @@ interface Props {
   locations: { name: string; rooms: string[] }[];
   initialLocation?: string;
   initialRoom?: string;
+  initialDate?: string;
   onSave: (draft: BookingDraft) => void;
   onHold: (draft: BookingDraft) => void;
 }
@@ -28,12 +29,12 @@ function checkoutOf(arrival: string, nights: number): string {
   return d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function NewBookingForm({ locations, initialLocation, initialRoom, onSave, onHold }: Props) {
+export default function NewBookingForm({ locations, initialLocation, initialRoom, initialDate, onSave, onHold }: Props) {
   const [mode, setMode] = useState<'single' | 'multiple'>('single');
   const [d, setD] = useState<BookingDraft>({
     location: initialLocation ?? locations[0]?.name ?? '',
     guestName: '', phone: '', rooms: initialRoom ? [initialRoom] : [], nights: 1,
-    arrival: '', arrivalTime: '', amount: '', method: 'Mobile money', reference: '', invoice: '',
+    arrival: initialDate ?? '', arrivalTime: '', amount: '', method: 'Mobile money', reference: '', invoice: '',
   });
   const set = <K extends keyof BookingDraft>(k: K, v: BookingDraft[K]) => setD((p) => ({ ...p, [k]: v }));
 

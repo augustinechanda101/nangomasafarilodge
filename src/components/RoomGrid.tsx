@@ -12,11 +12,11 @@ const BAR: Record<BarKind, string> = {
   inspect: 'bg-brick-chip text-brick-ink',
 };
 
-interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean; onAction?: (verb: string, bar: GridBar) => void; summary?: boolean; fill?: boolean }
+interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDayClick?: (dayIndex: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean; onAction?: (verb: string, bar: GridBar) => void; summary?: boolean; fill?: boolean }
 
 type Row = { kind: 'header'; label: string } | { kind: 'room'; room: GridRoom; roomIndex: number };
 
-export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1, canAct, onAction, summary = true, fill = false }: Props) {
+export default function RoomGrid({ days, rooms, bars, onRoomClick, onDayClick, zoomLevel = 1, canAct, onAction, summary = true, fill = false }: Props) {
   const [activeBar, setActiveBar] = useState<GridBar | null>(null);
 
   // Zoom levels: 1 = 7 days, 2 = 4 days, 3 = 2 days
@@ -54,16 +54,24 @@ export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1
           {/* Top-left empty cell */}
           <div className="bg-bark-soft rounded-tl-lg" />
 
-          {/* Column headers (top row) */}
+          {/* Column headers (top row) — clickable to open that day */}
           {columnLabels.map((label, i) => {
             const isHighlighted = i === 0;
-            return (
-              <div
+            const headerCls = `flex items-center justify-center border-t border-r text-xs ${
+              isHighlighted ? 'bg-ochre-chip text-ochre-ink font-semibold' : 'border-sand-line text-bark-muted'
+            }`;
+            return onDayClick ? (
+              <button
                 key={label}
-                className={`flex items-center justify-center border-t border-r text-xs ${
-                  isHighlighted ? 'bg-ochre-chip text-ochre-ink font-semibold' : 'border-sand-line text-bark-muted'
-                }`}
+                type="button"
+                onClick={() => onDayClick(i)}
+                className={`${headerCls} cursor-pointer hover:bg-sand-line hover:text-bark`}
+                title={`Open ${label}`}
               >
+                {label}
+              </button>
+            ) : (
+              <div key={label} className={headerCls}>
                 {label}
               </div>
             );

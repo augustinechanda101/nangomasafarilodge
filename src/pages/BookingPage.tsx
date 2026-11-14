@@ -8,6 +8,7 @@ export default function BookingPage() {
   const [params] = useSearchParams();
   const initialLocation = params.get('location') ?? undefined;
   const initialRoom = params.get('room') ?? undefined;
+  const initialDate = params.get('date') ?? undefined;
 
   const [locations, setLocations] = useState<LocationWithRooms[]>([]);
   const [saved, setSaved] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export default function BookingPage() {
           locations={locations.map((l) => ({ name: l.name, rooms: l.rooms.map((r) => r.name) }))}
           initialLocation={initialLocation}
           initialRoom={initialRoom}
+          initialDate={initialDate}
           onSave={save}
           onHold={save}
         />

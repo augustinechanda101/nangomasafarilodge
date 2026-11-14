@@ -315,6 +315,7 @@ export default function StaffPage() {
                   const room = rooms[roomNumber - 1];
                   setSelectedRoom({ name: room.name, number: roomNumber, room, bars, dayLabels });
                 }}
+                onDayClick={(dayIndex) => openDate(localISO(new Date(Date.now() + dayIndex * 86_400_000)))}
                 zoomLevel={zoomLevel}
                 summary={false}
               />

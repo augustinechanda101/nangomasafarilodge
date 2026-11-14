@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ALERTS, GRID_BARS, LOCATIONS } from '../lib/sampleStaff';
 import { bookingAction, fetchAlerts, fetchLocationsWithRooms, fetchWindowBars, setRoomState, type LocationWithRooms } from '../lib/data';
 import type { AlertItem, GridBar, GridRoom } from '../lib/staffTypes';
@@ -35,6 +35,7 @@ function nextDayLabels(n: number): string[] {
 }
 
 export default function ReceptionPage() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [selectedRoom, setSelectedRoom] = useState<{
     name: string; number: number; room?: GridRoom; bars: GridBar[]; dayLabels: string[];
@@ -348,13 +349,25 @@ export default function ReceptionPage() {
                         })()}
                   </span>
                 )}
-                <span className="text-[13px] text-bark-muted">
-                  {viewMode === 'monthly'
-                    ? 'Click a day to open its schedule'
-                    : zoomLevel > 1
-                    ? 'Zoomed view - use slider to adjust'
-                    : 'Check-out is always 10:00 AM'}
-                </span>
+                {viewMode === 'overview' && (
+                  <span className="text-[13px] text-bark-muted">
+                    {zoomLevel > 1
+                      ? 'Zoomed view - use the −/+ buttons to adjust'
+                      : 'Check-out is always 10:00 AM · Click a day to open it'}
+                  </span>
+                )}
+              </div>
+            )}
+            {viewMode === 'day' && activeDate && (
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-display text-lg font-semibold">{fmtDay(activeDate)}</h3>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/reception/booking?date=${activeDate}`)}
+                  className="min-h-10 rounded-xl bg-ochre px-4 text-sm font-semibold text-sand-card hover:bg-bark-deep transition-colors"
+                >
+                  Book for this day
+                </button>
               </div>
             )}
             {viewMode === 'monthly' ? (
@@ -406,6 +419,7 @@ export default function ReceptionPage() {
                   const room = rooms[roomNumber - 1];
                   setSelectedRoom({ name: room.name, number: roomNumber, room, bars, dayLabels });
                 }}
+                onDayClick={(dayIndex) => openDate(localISO(new Date(Date.now() + dayIndex * 86_400_000)))}
                 zoomLevel={zoomLevel}
                 canAct
                 onAction={handleAction}
