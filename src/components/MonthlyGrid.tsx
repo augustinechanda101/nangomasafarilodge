@@ -32,6 +32,11 @@ function occColor(pct: number): string {
   return 'bg-brick-ink';
 }
 
+// PostgREST many-to-one embeds (stay→room, room→location) arrive as
+// single OBJECTS, not arrays — handle both shapes
+const firstOf = <T,>(v: T[] | T | null | undefined): T | undefined =>
+  Array.isArray(v) ? v[0] : (v ?? undefined);
+
 // Real per-day, per-location booked-room counts for the displayed month
 function useMonthOccupancy(year: number, month: number) {
   const [occupancy, setOccupancy] = useState<Map<string, Map<string, number>>>(new Map());
@@ -57,13 +62,13 @@ function useMonthOccupancy(year: number, month: number) {
 
       const map = new Map<string, Map<string, number>>();
       for (const b of data ?? []) {
-        for (const stay of b.stays ?? []) {
+        for (const stay of (b as { stays?: { room_id: number; starts_at: string; ends_at: string; rooms?: { number?: string; locations?: { name?: string } | { name?: string }[] | null } | null }[] | null }).stays ?? []) {
           const start = new Date(stay.starts_at);
           const end = new Date(stay.ends_at);
           if (end <= monthStart || start >= monthEnd) continue;
-          const room = stay.rooms?.[0];
+          const room = firstOf(stay.rooms);
           if (!room) continue;
-          const locName = room.locations?.[0]?.name ?? 'Rooms';
+          const locName = firstOf(room.locations)?.name ?? 'Rooms';
           const cur = new Date(start);
           while (cur < end) {
             if (cur >= monthStart && cur < monthEnd) {
