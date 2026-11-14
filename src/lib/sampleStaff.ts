@@ -19,7 +19,7 @@ export const DAM_LODGE_ROOMS: GridRoom[] = [
 export const FARM_HOUSE_ROOMS: GridRoom[] = Array.from({ length: 13 }, (_, i) => ({
   name: `Room ${i + 1}`,
   state: 'Available',
-  type: 'Farm House room',
+  type: i === 3 ? 'Family Room' : 'Farm House room',
   location: 'Farm House',
 }));
 
