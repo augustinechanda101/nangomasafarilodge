@@ -127,7 +127,7 @@ export default function ActivityPanel() {
   );
 
   const list = (tall: boolean) => (
-    <div className={`overflow-y-auto overscroll-contain ${tall ? 'mt-4 flex-1' : 'mt-3 max-h-[28rem]'}`}>
+    <div className={`overflow-y-auto overscroll-contain ${tall ? 'mt-4 flex-1' : 'mt-3 max-h-[11rem]'}`}>
       {sorted === null ? (
         <div className="flex justify-center py-8">
           <span className="h-7 w-7 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
