@@ -37,8 +37,6 @@ export default function RecordsView({ records }: { records: BookingRecord[] }) {
       );
   }, [records, q, loc, sortAsc]);
 
-  const total = filtered.reduce((a, r) => a + r.amount, 0);
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
@@ -88,7 +86,7 @@ export default function RecordsView({ records }: { records: BookingRecord[] }) {
         </div>
 
         <span className="text-sm text-bark-muted">
-          {filtered.length} record{filtered.length === 1 ? '' : 's'} · K{total.toLocaleString()}
+          {filtered.length} record{filtered.length === 1 ? '' : 's'}
         </span>
       </div>
 
