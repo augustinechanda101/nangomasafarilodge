@@ -6,17 +6,17 @@ import ActivityPanel from '../components/ActivityPanel';
 import FinanceView from '../components/FinanceView';
 import KpiCard from '../components/KpiCard';
 import LoadingScreen from '../components/LoadingScreen';
-import LogsPanel from '../components/LogsPanel';
 import RecordsView from '../components/RecordsView';
 import RevenueChart from '../components/RevenueChart';
 import StaffHeader from '../components/StaffHeader';
+import StaffManager from '../components/StaffManager';
 import type { BookingRecord } from '../lib/staffTypes';
 
 const TABS = [
   { id: 'overall', label: 'Overall' },
   { id: 'activity', label: 'Activity' },
+  { id: 'staff', label: 'Staff' },
   { id: 'records', label: 'Records' },
-  { id: 'logs', label: 'Logs' },
   { id: 'finance', label: 'Finance' },
 ] as const;
 
@@ -65,10 +65,10 @@ export default function GmPage() {
           who={profile?.name ?? 'Management'}
           menuItems={
             <Link
-              to="/gm/staff"
+              to="/gm/logs"
               className="min-h-10 rounded-lg px-3 text-left text-sm font-semibold text-bark hover:bg-sand-line"
             >
-              Staff management
+              Logs
             </Link>
           }
         />
@@ -100,6 +100,8 @@ export default function GmPage() {
 
         {tab === 'activity' && <ActivityPanel />}
 
+        {tab === 'staff' && <StaffManager />}
+
         {tab === 'records' && (
           <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
             {records === null ? (
@@ -111,8 +113,6 @@ export default function GmPage() {
             )}
           </section>
         )}
-
-        {tab === 'logs' && <LogsPanel scope="management" />}
 
         {tab === 'finance' && (
           records === null ? (

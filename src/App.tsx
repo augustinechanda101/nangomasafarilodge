@@ -9,7 +9,7 @@ import RecordsPage from './pages/RecordsPage';
 import LogsPage from './pages/LogsPage';
 import FinancePage from './pages/FinancePage';
 import GmPage from './pages/GmPage';
-import GmStaffPage from './pages/GmStaffPage';
+import GmLogsPage from './pages/GmLogsPage';
 import { RequireAuth } from './lib/auth';
 
 function App() {
@@ -26,7 +26,7 @@ function App() {
         <Route path="/reception/logs" element={<RequireAuth roles={['reception']}><LogsPage /></RequireAuth>} />
         <Route path="/reception/finance" element={<RequireAuth roles={['reception']}><FinancePage /></RequireAuth>} />
         <Route path="/gm" element={<RequireAuth roles={['gm']}><GmPage /></RequireAuth>} />
-        <Route path="/gm/staff" element={<RequireAuth roles={['gm']}><GmStaffPage /></RequireAuth>} />
+        <Route path="/gm/logs" element={<RequireAuth roles={['gm']}><GmLogsPage /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
   );

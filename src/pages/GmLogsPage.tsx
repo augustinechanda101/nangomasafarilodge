@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
+import LogsPanel from '../components/LogsPanel';
 import StaffHeader from '../components/StaffHeader';
-import StaffManager from '../components/StaffManager';
 import { useProfile } from '../lib/auth';
 
-export default function GmStaffPage() {
+export default function GmLogsPage() {
   const profile = useProfile();
 
   return (
@@ -12,9 +12,9 @@ export default function GmStaffPage() {
         <div className="flex items-center justify-between">
           <Link to="/gm" className="text-sm text-bark-muted hover:underline">← Back to Management</Link>
         </div>
-        <StaffHeader role="General manager — Staff" who={profile?.name ?? 'Management'} />
+        <StaffHeader role="General manager — Logs" who={profile?.name ?? 'Management'} />
 
-        <StaffManager />
+        <LogsPanel scope="management" />
       </div>
     </div>
   );
