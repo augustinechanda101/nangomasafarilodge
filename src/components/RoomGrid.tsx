@@ -150,6 +150,30 @@ export default function RoomGrid({ days, rooms, bars, onRoomClick, zoomLevel = 1
               </div>
             );
           })}
+
+          {/* State banners: hold / maintenance / unavailable rooms are visibly not sellable */}
+          {rooms.map((r, i) => {
+            if (r.state === 'Available') return null;
+            const rowIndex = rowIndexByRoom.get(i);
+            if (rowIndex === undefined) return null;
+            const cls =
+              r.state === 'hold' ? 'bg-ochre text-sand-card'
+              : r.state === 'maintenance' ? 'bg-brick-ink text-sand-card'
+              : 'bg-bark-deep text-sand-card';
+            const label =
+              r.state === 'hold' ? 'On hold — awaiting payment'
+              : r.state === 'maintenance' ? 'Maintenance'
+              : 'Unavailable';
+            return (
+              <div
+                key={`state-${r.id ?? r.name}`}
+                className={`flex items-center px-2 text-xs font-semibold ${cls}`}
+                style={{ gridArea: `${rowIndex + 2} / 2 / ${rowIndex + 3} / ${numColumns + 2}` }}
+              >
+                {label}
+              </div>
+            );
+          })}
         </div>
       </div>
 
