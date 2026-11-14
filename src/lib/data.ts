@@ -9,6 +9,11 @@ export interface LocationWithRooms {
 
 const DAY_MS = 86_400_000;
 
+// PostgREST returns many-to-one embeds (stay→room, room→location, log→user)
+// as single OBJECTS, not arrays — handle both shapes defensively
+const firstOf = <T,>(v: T[] | T | null | undefined): T | undefined =>
+  Array.isArray(v) ? v[0] : (v ?? undefined);
+
 // Fetch locations with their rooms, mapped to the UI's GridRoom shape
 export async function fetchLocationsWithRooms(): Promise<LocationWithRooms[]> {
   const { data, error } = await supabase
@@ -74,7 +79,7 @@ interface BookingRow {
     room_id: number;
     starts_at: string;
     ends_at: string;
-    rooms: { number: string }[] | null;
+    rooms: { number: string; locations: { name: string } | null } | null;
   }[];
   payments: { amount: number; method: string; voided: boolean }[] | null;
 }
@@ -85,7 +90,8 @@ async function fetchBookingRows(): Promise<BookingRow[]> {
     .select('id, invoice, guest_name, status, expected_arrival, checkout_at, checked_in_at, checked_out_at, stays (room_id, starts_at, ends_at, rooms ( number )), payments (amount, method, voided)')
     .neq('status', 'cancelled');
   if (error) throw error;
-  return data ?? [];
+  // Runtime embeds are objects (many-to-one); Supabase's typegen says arrays — cast
+  return (data ?? []) as unknown as BookingRow[];
 }
 
 function kindFor(status: string): GridBar['kind'] {
@@ -99,11 +105,7 @@ const lusakaTime = (iso: string) =>
   new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' });
 
 function labelFor(b: BookingRow): string {
-  if (b.status === 'booked') {
-    const d = new Date(b.expected_arrival);
-    const h = d.getHours();
-    return `${b.guest_name} · arrives ${((h % 12) || 12)}:${String(d.getMinutes()).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
-  }
+  if (b.status === 'booked') return `${b.guest_name} · awaiting arrival`;
   if (b.status === 'checked_in') {
     return b.checked_in_at ? `${b.guest_name} · checked in ${lusakaTime(b.checked_in_at)}` : `${b.guest_name} · checked in`;
   }
@@ -168,7 +170,7 @@ export async function fetchRecords(): Promise<BookingRecord[]> {
   const records: BookingRecord[] = [];
   for (const b of data ?? []) {
     for (const stay of b.stays ?? []) {
-      const room = stay.rooms?.[0];
+      const room = firstOf(stay.rooms);
       const p = (b.payments ?? []).find((x) => !x.voided);
       const nights = Math.max(1, Math.round(
         (new Date(b.checkout_at).getTime() - new Date(b.expected_arrival).getTime()) / DAY_MS,
@@ -177,7 +179,7 @@ export async function fetchRecords(): Promise<BookingRecord[]> {
         guest: b.guest_name,
         phone: b.guest_phone ?? '',
         room: room?.number ?? `#${stay.room_id}`,
-        location: room?.locations?.[0]?.name ?? '',
+        location: firstOf(room?.locations)?.name ?? '',
         checkIn: `${new Date(b.expected_arrival).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' })} ${lusakaTime(b.expected_arrival)}`,
         nights,
         amount: p ? Number(p.amount) : 0,
@@ -204,7 +206,7 @@ export async function fetchLogs(dateStr: string, scope: 'reception' | 'managemen
     .filter((l) => new Date(l.at).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' }) === dateStr)
     .filter((l) => scope === 'management' || !l.action.startsWith('staff '))
     .map((l) => {
-      const row = l as { id: number; action: string; at: string; users?: { name?: string }[] | null };
+      const row = l as { id: number; action: string; at: string; users?: { name?: string } | null };
       const m = row.action.match(/ — by (.+)$/);
       const action = row.action.toLowerCase();
       const tone: LogEvent['tone'] =
@@ -216,7 +218,7 @@ export async function fetchLogs(dateStr: string, scope: 'reception' | 'managemen
         time: new Date(row.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' }),
         text: row.action,
         tone,
-        who: row.users?.[0]?.name ?? m?.[1] ?? undefined,
+        who: firstOf(row.users)?.name ?? m?.[1] ?? undefined,
       };
     })
     .reverse(); // chronological order
@@ -279,9 +281,9 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
 
   for (const b of bookings ?? []) {
     for (const stay of b.stays ?? []) {
-      const room = stay.rooms?.[0];
+      const room = firstOf(stay.rooms);
       const roomNumber = room?.number ?? `#${stay.room_id}`;
-      const locName = room?.locations?.[0]?.name;
+      const locName = firstOf(room?.locations)?.name;
       // Alert text: guest name · room number · expected/checkout date.
       // Location shows in the card's corner — no invoice in alerts.
       if (b.status === 'checked_in' && b.checkout_at < now) {
@@ -368,14 +370,14 @@ export async function fetchActivityRange(
     })
     .filter((l) => scope === 'management' || !l.action.startsWith('staff '))
     .map((l) => {
-      const row = l as { id: number; action: string; at: string; users?: { name?: string }[] | null };
+      const row = l as { id: number; action: string; at: string; users?: { name?: string } | null };
       const m = row.action.match(/ — by (.+)$/);
       return {
         id: row.id,
         text: row.action,
         date: lusakaDate(row.at),
         time: new Date(row.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' }),
-        who: row.users?.[0]?.name ?? m?.[1] ?? undefined,
+        who: firstOf(row.users)?.name ?? m?.[1] ?? undefined,
       };
     })
     .reverse();
