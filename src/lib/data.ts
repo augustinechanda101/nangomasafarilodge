@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { BookingDraft, GridBar, GridRoom } from './staffTypes';
+import type { AlertItem, BookingDraft, GridBar, GridRoom } from './staffTypes';
 
 export interface LocationWithRooms {
   id: number;
@@ -211,4 +211,61 @@ export async function bookingAction(verb: string, bookingId: number, label: stri
   if (error) return error.message;
   await supabase.from('activity_log').insert({ action: `${verb}: ${label}`, booking_id: bookingId });
   return null;
+}
+
+// Live alerts derived from real data:
+//  - overdue checkout: checked-in booking past its checkout time
+//  - awaiting check-in: booked guest whose arrival time has passed
+//  - needs inspection / awaiting cleaning: room housekeeping state
+export async function fetchAlerts(): Promise<AlertItem[]> {
+  const now = new Date().toISOString();
+  const alerts: AlertItem[] = [];
+
+  const { data: bookings, error } = await supabase
+    .from('bookings')
+    .select('id, invoice, guest_name, status, expected_arrival, checkout_at, stays (room_id, rooms ( number, locations ( name ) ))')
+    .in('status', ['checked_in', 'booked']);
+  if (error) throw error;
+
+  for (const b of bookings ?? []) {
+    for (const stay of b.stays ?? []) {
+      const room = stay.rooms?.[0];
+      const roomNumber = room?.number ?? `#${stay.room_id}`;
+      const locName = room?.locations?.[0]?.name;
+      const roomLabel = `${roomNumber}${locName ? ` · ${locName}` : ''}`;
+      if (b.status === 'checked_in' && b.checkout_at < now) {
+        alerts.push({
+          id: 10000 + b.id,
+          tag: 'Overdue checkout',
+          tone: 'bad',
+          text: `${roomLabel} · ${b.guest_name} · checkout was ${new Date(b.checkout_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`,
+          action: 'Check out',
+        });
+      } else if (b.status === 'booked' && b.expected_arrival <= now) {
+        alerts.push({
+          id: 20000 + b.id,
+          tag: 'Awaiting check-in',
+          tone: 'warn',
+          text: `${roomLabel} · ${b.guest_name} · expected ${new Date(b.expected_arrival).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`,
+          action: 'Check in',
+        });
+      }
+    }
+  }
+
+  const { data: rooms } = await supabase
+    .from('rooms')
+    .select('id, number, housekeeping, locations ( name )')
+    .in('housekeeping', ['needs_inspection', 'awaiting_cleaning']);
+  for (const r of rooms ?? []) {
+    alerts.push({
+      id: 30000 + r.id,
+      tag: r.housekeeping === 'needs_inspection' ? 'Needs inspection' : 'Awaiting cleaning',
+      tone: 'warn',
+      text: `${r.number} · ${(r.locations as unknown as { name: string } | null)?.name ?? ''}`,
+      action: r.housekeeping === 'needs_inspection' ? 'Mark ready' : 'Mark cleaned',
+    });
+  }
+
+  return alerts;
 }

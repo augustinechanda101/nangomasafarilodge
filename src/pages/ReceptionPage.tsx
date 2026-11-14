@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ALERTS, GRID_BARS, LOCATIONS } from '../lib/sampleStaff';
-import { bookingAction, fetchDayBars, fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
-import type { GridBar } from '../lib/staffTypes';
+import { bookingAction, fetchAlerts, fetchDayBars, fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
+import type { AlertItem, GridBar } from '../lib/staffTypes';
 import AlertCard from '../components/AlertCard';
 import RoomGrid from '../components/RoomGrid';
 import HourlyGrid from '../components/HourlyGrid';
@@ -61,6 +61,17 @@ export default function ReceptionPage() {
   const dayLabels = nextDayLabels(numColumns);
 
   const [bars, setBars] = useState<GridBar[]>(GRID_BARS);
+  const [alerts, setAlerts] = useState<AlertItem[]>(ALERTS);
+
+  const loadAlerts = useCallback(() => {
+    fetchAlerts()
+      .then(setAlerts)
+      .catch((e) => console.error('alerts fetch failed', e));
+  }, []);
+
+  useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts]);
 
   const loadBars = useCallback(() => {
     const current = viewMode === 'day' && activeDate ? activeDate : selectedDate;
@@ -106,7 +117,10 @@ export default function ReceptionPage() {
   };
 
   // TODO: replace each handler with the Express call (server re-checks every rule)
-  const handleAlert = (id: number) => console.log('POST /api/alerts/%s/action', id);
+  const handleAlert = (id: number) => {
+    console.log('POST /api/alerts/%s/action', id);
+    loadAlerts();
+  };
 
   return (
     <div className="min-h-screen bg-sand font-sans text-bark">
@@ -148,11 +162,15 @@ export default function ReceptionPage() {
         />
 
         <div className="flex gap-3 overflow-x-auto pb-2">
-          {ALERTS.map((a) => (
-            <div key={a.id} className="flex-shrink-0 min-w-[280px]">
-              <AlertCard item={a} onAction={handleAlert} />
-            </div>
-          ))}
+          {alerts.length === 0 ? (
+            <p className="text-sm text-bark-muted">No alerts — all clear</p>
+          ) : (
+            alerts.map((a) => (
+              <div key={a.id} className="flex-shrink-0 min-w-[280px]">
+                <AlertCard item={a} onAction={handleAlert} />
+              </div>
+            ))
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
