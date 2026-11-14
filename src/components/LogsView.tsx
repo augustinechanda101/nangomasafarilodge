@@ -48,6 +48,7 @@ export default function LogsView({ date, onDateChange, logs, loading }: Props) {
             logs.map((e, i) => {
               const m = e.text.match(/ — by (.+)$/);
               const text = m ? e.text.replace(/ — by .+$/, '') : e.text;
+              const who = e.who ?? m?.[1];
               return (
                 <div
                   key={`${e.time}-${i}`}
@@ -55,9 +56,9 @@ export default function LogsView({ date, onDateChange, logs, loading }: Props) {
                 >
                   <span className="w-14 shrink-0 font-semibold">{e.time}</span>
                   <span className="flex-1">{text}</span>
-                  {m && (
+                  {who && (
                     <span className="shrink-0 rounded-full bg-sand-card px-2 py-0.5 text-[11px] font-semibold text-bark">
-                      by {m[1]}
+                      by {who}
                     </span>
                   )}
                 </div>

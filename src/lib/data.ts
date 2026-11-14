@@ -195,7 +195,7 @@ export async function fetchRecords(): Promise<BookingRecord[]> {
 export async function fetchLogs(dateStr: string, scope: 'reception' | 'management' = 'reception'): Promise<LogEvent[]> {
   const { data, error } = await supabase
     .from('activity_log')
-    .select('id, action, at')
+    .select('id, action, at, users ( name )')
     .order('at', { ascending: false });
   if (error) throw error;
 
@@ -203,16 +203,19 @@ export async function fetchLogs(dateStr: string, scope: 'reception' | 'managemen
     .filter((l) => new Date(l.at).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' }) === dateStr)
     .filter((l) => scope === 'management' || !l.action.startsWith('staff '))
     .map((l) => {
-      const action = l.action.toLowerCase();
+      const row = l as { id: number; action: string; at: string; users?: { name?: string }[] | null };
+      const m = row.action.match(/ — by (.+)$/);
+      const action = row.action.toLowerCase();
       const tone: LogEvent['tone'] =
         action.startsWith('checkin') ? 'in'
         : action.startsWith('checkout') ? 'out'
         : action.includes('payment') ? 'money'
         : 'info';
       return {
-        time: new Date(l.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' }),
-        text: l.action,
+        time: new Date(row.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' }),
+        text: row.action,
         tone,
+        who: row.users?.[0]?.name ?? m?.[1] ?? undefined,
       };
     })
     .reverse(); // chronological order
@@ -319,7 +322,7 @@ const lusakaDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' });
 
 export interface StaffActions { name: string; actions: number }
-export interface ActivityEntry { id: number; text: string; date: string; time: string }
+export interface ActivityEntry { id: number; text: string; date: string; time: string; who?: string }
 export interface StaffMember {
   id: string;
   name: string;
@@ -343,7 +346,7 @@ export async function fetchActivityRange(
 ): Promise<ActivityEntry[]> {
   const { data, error } = await supabase
     .from('activity_log')
-    .select('id, action, at')
+    .select('id, action, at, users ( name )')
     .order('at', { ascending: false });
   if (error) throw error;
 
@@ -353,12 +356,17 @@ export async function fetchActivityRange(
       return d >= fromStr && d <= toStr;
     })
     .filter((l) => scope === 'management' || !l.action.startsWith('staff '))
-    .map((l) => ({
-      id: l.id,
-      text: l.action,
-      date: lusakaDate(l.at),
-      time: new Date(l.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' }),
-    }))
+    .map((l) => {
+      const row = l as { id: number; action: string; at: string; users?: { name?: string }[] | null };
+      const m = row.action.match(/ — by (.+)$/);
+      return {
+        id: row.id,
+        text: row.action,
+        date: lusakaDate(row.at),
+        time: new Date(row.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' }),
+        who: row.users?.[0]?.name ?? m?.[1] ?? undefined,
+      };
+    })
     .reverse();
 }
 

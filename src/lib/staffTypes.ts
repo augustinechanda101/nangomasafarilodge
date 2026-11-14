@@ -43,4 +43,5 @@ export interface LogEvent {
   time: string;
   text: string;
   tone: 'in' | 'out' | 'money' | 'info';
+  who?: string;
 }
