@@ -38,9 +38,10 @@ export default function CompactDayGrid({ rooms, bars, canAct, onAction, onRoomCl
               <button
                 type="button"
                 onClick={() => onRoomClick?.(i + 1)}
-                className="w-16 shrink-0 text-left text-xs font-semibold text-bark hover:underline"
+                className="w-20 shrink-0 text-left hover:underline"
               >
-                {r.name}
+                <span className="block text-xs font-semibold text-bark">{r.name}</span>
+                <span className="block text-[9px] leading-tight text-bark-muted">{r.type}</span>
               </button>
               {bar ? (
                 <button
