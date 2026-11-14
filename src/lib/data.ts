@@ -455,11 +455,13 @@ export async function fetchGmData(): Promise<GmData> {
     revenue.push({ day: day.slice(5), amount, today: i === 0 });
   }
 
-  // --- Actions by staff, last 7 days (from the stamped log entries) ---
+  // --- Actions by staff, last 7 days (desk actions only — staff-account
+  //     actions belong to the management Logs, not here) ---
   const weekAgo = lusakaDate(new Date(now.getTime() - 7 * DAY_MS).toISOString());
   const byStaff = new Map<string, number>();
   for (const l of logs) {
     if (lusakaDate(l.at) < weekAgo) continue;
+    if (l.action.startsWith('staff ')) continue;
     const m = l.action.match(/— by (.+)$/);
     if (m) byStaff.set(m[1], (byStaff.get(m[1]) ?? 0) + 1);
   }
@@ -467,8 +469,12 @@ export async function fetchGmData(): Promise<GmData> {
     .map(([name, actions]) => ({ name, actions }))
     .sort((a, b) => b.actions - a.actions);
 
-  // --- Recent activity feed ---
-  const feed: GmFeedItem[] = logs.slice(0, 20).map((l) => ({
+  // --- Recent activity feed: reception/desk activities only ---
+  // Staff-account actions (added/suspended/deleted) live in the management Logs tab.
+  const feed: GmFeedItem[] = logs
+    .filter((l) => !l.action.startsWith('staff '))
+    .slice(0, 20)
+    .map((l) => ({
     id: l.id,
     text: l.action,
     when: lusakaDate(l.at) === today
