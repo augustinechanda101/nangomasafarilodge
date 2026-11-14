@@ -10,14 +10,12 @@ import LogsPanel from '../components/LogsPanel';
 import RecordsView from '../components/RecordsView';
 import RevenueChart from '../components/RevenueChart';
 import StaffHeader from '../components/StaffHeader';
-import StaffManager from '../components/StaffManager';
 import StaffTotals from '../components/StaffTotals';
 import type { BookingRecord } from '../lib/staffTypes';
 
 const TABS = [
   { id: 'overall', label: 'Overall' },
   { id: 'activity', label: 'Activity' },
-  { id: 'staff', label: 'Staff' },
   { id: 'records', label: 'Records' },
   { id: 'logs', label: 'Logs' },
   { id: 'finance', label: 'Finance' },
@@ -63,7 +61,18 @@ export default function GmPage() {
         <div className="flex items-center justify-between">
           <Link to="/" className="text-sm text-bark-muted hover:underline">← Back to Home</Link>
         </div>
-        <StaffHeader role="General manager" who={profile?.name ?? 'Management'} />
+        <StaffHeader
+          role="General manager"
+          who={profile?.name ?? 'Management'}
+          menuItems={
+            <Link
+              to="/gm/staff"
+              className="min-h-10 rounded-lg px-3 text-left text-sm font-semibold text-bark hover:bg-sand-line"
+            >
+              Staff management
+            </Link>
+          }
+        />
 
         {/* Section tabs */}
         <div className="flex w-fit flex-wrap items-center gap-3 rounded-xl bg-bark-soft p-0.5">
@@ -96,8 +105,6 @@ export default function GmPage() {
             <StaffTotals rows={data.staffTotals} />
           </div>
         )}
-
-        {tab === 'staff' && <StaffManager />}
 
         {tab === 'records' && (
           <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
