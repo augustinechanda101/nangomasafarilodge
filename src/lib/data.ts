@@ -410,7 +410,7 @@ export async function fetchGmData(): Promise<GmData> {
     .sort((a, b) => b.actions - a.actions);
 
   // --- Recent activity feed ---
-  const feed: GmFeedItem[] = logs.slice(0, 6).map((l) => ({
+  const feed: GmFeedItem[] = logs.slice(0, 20).map((l) => ({
     id: l.id,
     text: l.action,
     when: lusakaDate(l.at) === today

@@ -9,10 +9,19 @@ import RevenueChart from '../components/RevenueChart';
 import StaffHeader from '../components/StaffHeader';
 import StaffTotals from '../components/StaffTotals';
 
+const TABS = [
+  { id: 'overall', label: 'Overall' },
+  { id: 'activity', label: 'Activity' },
+  { id: 'staff', label: 'Staff' },
+] as const;
+
+type TabId = (typeof TABS)[number]['id'];
+
 export default function GmPage() {
   const profile = useProfile();
   const [data, setData] = useState<GmData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabId>('overall');
 
   useEffect(() => {
     fetchGmData()
@@ -38,19 +47,34 @@ export default function GmPage() {
         </div>
         <StaffHeader role="General manager" who={profile?.name ?? 'Management'} />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {data.kpis.map((k) => <KpiCard key={k.label} kpi={k} />)}
+        {/* Section tabs */}
+        <div className="flex w-fit flex-wrap items-center gap-3 rounded-xl bg-bark-soft p-0.5">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`min-h-10 rounded-lg px-4 text-sm font-semibold transition-colors ${
+                tab === t.id ? 'bg-sand-card text-bark shadow-sm' : 'text-bark-muted hover:text-bark'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        <div className="flex flex-col items-start gap-4 lg:flex-row">
-          <div className="flex w-full flex-[3] flex-col gap-4">
+        {tab === 'overall' && (
+          <>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              {data.kpis.map((k) => <KpiCard key={k.label} kpi={k} />)}
+            </div>
             <RevenueChart data={data.revenue} />
-            <StaffTotals rows={data.staffTotals} />
-          </div>
-          <div className="flex w-full flex-[2] flex-col gap-4">
-            <ActivityFeed items={data.feed} />
-          </div>
-        </div>
+          </>
+        )}
+
+        {tab === 'activity' && <ActivityFeed items={data.feed} />}
+
+        {tab === 'staff' && <StaffTotals rows={data.staffTotals} />}
       </div>
     </div>
   );
