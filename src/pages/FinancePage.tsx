@@ -24,6 +24,7 @@ const PERIODS: { id: Period; label: string }[] = [
 
 export default function FinancePage() {
   const [records, setRecords] = useState<BookingRecord[]>([]);
+  const [daysOpen, setDaysOpen] = useState(false);
   const [period, setPeriod] = useState<Period>('today');
   const [customFrom, setCustomFrom] = useState(localISO(new Date(Date.now() - 6 * 86_400_000)));
   const [customTo, setCustomTo] = useState(localISO(new Date()));
@@ -150,12 +151,28 @@ export default function FinancePage() {
           <RecordsView records={periodRecords} />
         </section>
 
-        {/* Per-day records for the period */}
+        {/* Per-day records for the period — collapsible */}
         <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
-          <h4 className="mb-3 text-sm font-semibold text-bark">
-            Each day's record — {periodLabel.toLowerCase()}
-          </h4>
-          <div className="overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setDaysOpen(!daysOpen)}
+            className="flex w-full items-center justify-between gap-2 text-left"
+          >
+            <h4 className="text-sm font-semibold text-bark">
+              Each day's record — {periodLabel.toLowerCase()}
+            </h4>
+            <span className="flex items-center gap-2 text-xs font-semibold text-bark-muted">
+              {days.length > 3 && !daysOpen && <span>{days.length - 3} more days</span>}
+              <span
+                className={`flex h-7 w-7 items-center justify-center rounded-lg bg-bark-soft text-bark transition-transform ${
+                  daysOpen ? 'rotate-180' : ''
+                }`}
+              >
+                ▾
+              </span>
+            </span>
+          </button>
+          <div className={`overflow-x-auto ${daysOpen ? 'mt-3' : ''}`}>
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
                 <tr className="text-xs uppercase tracking-wide text-bark-muted">
@@ -168,7 +185,7 @@ export default function FinancePage() {
                 </tr>
               </thead>
               <tbody>
-                {days.map((d) => (
+                {(daysOpen ? days : days.slice(0, 3)).map((d) => (
                   <tr key={d.date} className={`border-t border-sand-line ${d.date === today ? 'bg-ochre-chip' : ''}`}>
                     <td className="py-2 pr-3 font-semibold">
                       {d.date}
