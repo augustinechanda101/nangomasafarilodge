@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import PublicPage from './pages/PublicPage';
 import LoginPage from './pages/LoginPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import StaffPage from './pages/StaffPage';
 import ReceptionPage from './pages/ReceptionPage';
 import BookingPage from './pages/BookingPage';
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/guest" element={<PublicPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/staff" element={<RequireAuth roles={['staff']}><StaffPage /></RequireAuth>} />
         <Route path="/reception" element={<RequireAuth roles={['reception']}><ReceptionPage /></RequireAuth>} />
         <Route path="/reception/booking" element={<RequireAuth roles={['reception']}><BookingPage /></RequireAuth>} />

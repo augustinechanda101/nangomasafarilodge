@@ -26,6 +26,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [forgot, setForgot] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  // Forgot password: Supabase emails a secure reset link (delivered by Resend once SMTP is configured)
+  const sendReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setResetSent(true);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,44 +99,91 @@ export default function LoginPage() {
         />
         <div className="flex flex-col items-center gap-1">
           <h1 className="font-sans text-xl font-semibold">
-            {portal ? PORTALS[portal].title : 'Staff Login'}
+            {forgot ? 'Reset password' : portal ? PORTALS[portal].title : 'Staff Login'}
           </h1>
-          {portal && (
+          {!forgot && portal && (
             <p className="text-[13px] text-bark-muted">{PORTALS[portal].label} accounts only</p>
           )}
         </div>
-        <form className="flex w-full flex-col gap-3" onSubmit={submit}>
-          <label className={LABEL}>Email
-            <input
-              className={FIELD}
-              type="email"
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
-          <label className={LABEL}>Password
-            <input
-              className={FIELD}
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
-          {error && (
-            <p className="rounded-xl bg-brick-chip px-3 py-2 text-sm font-semibold text-brick-ink">{error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={busy}
-            className="min-h-11 rounded-xl bg-bark-deep text-sm font-semibold text-sand-card hover:bg-bark disabled:opacity-60"
-          >
-            {busy ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
+        {forgot ? (
+          resetSent ? (
+            <>
+              <p className="rounded-xl bg-savanna-chip px-3 py-2 text-center text-sm font-semibold text-savanna-ink">
+                Reset link sent — check your email
+              </p>
+              <button type="button" onClick={() => { setForgot(false); setResetSent(false); }}
+                className="min-h-10 rounded-xl bg-bark-soft text-sm font-semibold text-bark hover:bg-bark-off">
+                ← Back to sign in
+              </button>
+            </>
+          ) : (
+            <form className="flex w-full flex-col gap-3" onSubmit={sendReset}>
+              <label className={LABEL}>Email
+                <input
+                  className={FIELD}
+                  type="email"
+                  autoComplete="username"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </label>
+              {error && (
+                <p className="rounded-xl bg-brick-chip px-3 py-2 text-sm font-semibold text-brick-ink">{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={busy}
+                className="min-h-11 rounded-xl bg-bark-deep text-sm font-semibold text-sand-card hover:bg-bark disabled:opacity-60"
+              >
+                {busy ? 'Sending…' : 'Send reset link'}
+              </button>
+              <button type="button" onClick={() => { setForgot(false); setError(null); }}
+                className="text-sm text-bark-muted hover:underline">
+                ← Back to sign in
+              </button>
+            </form>
+          )
+        ) : (
+          <>
+            <form className="flex w-full flex-col gap-3" onSubmit={submit}>
+              <label className={LABEL}>Email
+                <input
+                  className={FIELD}
+                  type="email"
+                  autoComplete="username"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </label>
+              <label className={LABEL}>Password
+                <input
+                  className={FIELD}
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </label>
+              {error && (
+                <p className="rounded-xl bg-brick-chip px-3 py-2 text-sm font-semibold text-brick-ink">{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={busy}
+                className="min-h-11 rounded-xl bg-bark-deep text-sm font-semibold text-sand-card hover:bg-bark disabled:opacity-60"
+              >
+                {busy ? 'Signing in…' : 'Sign in'}
+              </button>
+            </form>
+            <button type="button" onClick={() => { setForgot(true); setError(null); }}
+              className="text-sm text-bark-muted hover:underline">
+              Forgot password?
+            </button>
+          </>
+        )}
         <Link to="/" className="text-sm text-bark-muted hover:underline">← Back to Home</Link>
       </div>
     </div>
