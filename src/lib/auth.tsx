@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from './supabase';
+import { setCurrentUser } from './data';
 import LoadingScreen from '../components/LoadingScreen';
 
 export interface Profile {
@@ -56,6 +57,7 @@ export function useProfile(): Profile | null {
         .eq('id', u.id)
         .maybeSingle();
       if (row) setProfile(row as Profile);
+      setCurrentUser({ id: u.id, name: (row as Profile | null)?.name ?? meta?.name ?? u.email ?? '' });
     });
   }, []);
   return profile;

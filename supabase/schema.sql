@@ -170,7 +170,8 @@ CREATE OR REPLACE FUNCTION create_booking(
   p_amount         NUMERIC,
   p_method         TEXT,
   p_reference      TEXT,
-  p_invoice        TEXT DEFAULT NULL
+  p_invoice        TEXT DEFAULT NULL,
+  p_created_by     TEXT DEFAULT NULL
 ) RETURNS JSON
 LANGUAGE plpgsql
 AS $$
@@ -204,8 +205,9 @@ BEGIN
     VALUES (v_booking_id, p_amount, p_method, p_reference, v_invoice);
   END IF;
 
-  INSERT INTO activity_log (action, booking_id)
-  VALUES ('booking created: ' || p_guest_name || ' · rooms ' || array_to_string(p_room_numbers, ', '), v_booking_id);
+  INSERT INTO activity_log (user_id, action, booking_id)
+  VALUES (auth.uid(), 'booking created: ' || p_guest_name || ' · rooms ' || array_to_string(p_room_numbers, ', ')
+           || COALESCE(' — by ' || p_created_by, ''), v_booking_id);
 
   RETURN json_build_object('booking_id', v_booking_id, 'invoice', v_invoice);
 EXCEPTION

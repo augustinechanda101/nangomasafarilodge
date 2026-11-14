@@ -32,6 +32,12 @@ export async function fetchLocationsWithRooms(): Promise<LocationWithRooms[]> {
   }));
 }
 
+// Currently signed-in staff member — stamped onto every activity log entry
+let currentUser: { id: string; name: string } | null = null;
+export function setCurrentUser(u: { id: string; name: string } | null) {
+  currentUser = u;
+}
+
 // Create a booking via the atomic DB function (booking + stays + payment + log)
 export async function createBooking(
   locationId: number,
@@ -49,6 +55,7 @@ export async function createBooking(
     p_method: draft.method,
     p_reference: draft.reference || null,
     p_invoice: draft.invoice || null,
+    p_created_by: currentUser?.name ?? null,
   });
   if (error) return { error: error.message };
   return data;
@@ -224,7 +231,11 @@ export async function bookingAction(verb: string, bookingId: number, label: stri
   }
   const { error } = await supabase.from('bookings').update(patch).eq('id', bookingId);
   if (error) return error.message;
-  await supabase.from('activity_log').insert({ action: `${verb}: ${label}`, booking_id: bookingId });
+  await supabase.from('activity_log').insert({
+    action: `${verb}: ${label}${currentUser ? ` — by ${currentUser.name}` : ''}`,
+    booking_id: bookingId,
+    user_id: currentUser?.id,
+  });
   return null;
 }
 
@@ -232,7 +243,10 @@ export async function bookingAction(verb: string, bookingId: number, label: stri
 export async function setRoomState(roomId: number, housekeeping: string, roomLabel: string): Promise<string | null> {
   const { error } = await supabase.from('rooms').update({ housekeeping }).eq('id', roomId);
   if (error) return error.message;
-  await supabase.from('activity_log').insert({ action: `room ${housekeeping}: ${roomLabel}` });
+  await supabase.from('activity_log').insert({
+    action: `room ${housekeeping}: ${roomLabel}${currentUser ? ` — by ${currentUser.name}` : ''}`,
+    user_id: currentUser?.id,
+  });
   return null;
 }
 
