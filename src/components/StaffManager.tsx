@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { addStaff, fetchStaffList, setStaffStatus, type StaffMember } from '../lib/data';
+import { addStaff, deleteStaff, fetchStaffList, setStaffStatus, type StaffMember } from '../lib/data';
 
 const FIELD =
   'min-h-10 w-full rounded-xl border border-bark-field bg-sand-card px-3 text-sm text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre';
@@ -26,6 +26,7 @@ export default function StaffManager() {
   const [dept, setDept] = useState<string>('reception');
   const [busy, setBusy] = useState(false);
   const [rowBusy, setRowBusy] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
 
@@ -39,6 +40,24 @@ export default function StaffManager() {
       return;
     }
     setError(null);
+    load();
+  };
+
+  const remove = async (m: StaffMember) => {
+    if (confirmId !== m.id) {
+      setConfirmId(m.id);
+      return;
+    }
+    setConfirmId(null);
+    setRowBusy(m.id);
+    const err = await deleteStaff(m.id);
+    setRowBusy(null);
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError(null);
+    setSaved(`${m.name} permanently deleted`);
     load();
   };
 
@@ -181,6 +200,20 @@ export default function StaffManager() {
                 {rowBusy === m.id
                   ? <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ochre border-t-transparent align-middle" />
                   : m.status === 'disabled' ? 'Reinstate' : 'Suspend'}
+              </button>
+              <button
+                type="button"
+                onClick={() => remove(m)}
+                disabled={rowBusy === m.id}
+                className={`min-h-9 rounded-lg px-3 text-xs font-semibold disabled:opacity-60 ${
+                  confirmId === m.id
+                    ? 'bg-brick-ink text-sand-card hover:bg-brick'
+                    : 'bg-brick-chip text-brick-ink hover:bg-brick'
+                }`}
+              >
+                {rowBusy === m.id
+                  ? <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-sand-card border-t-transparent align-middle" />
+                  : confirmId === m.id ? 'Confirm delete?' : 'Delete'}
               </button>
             </div>
           ))}

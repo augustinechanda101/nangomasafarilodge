@@ -371,6 +371,14 @@ export async function setStaffStatus(id: string, status: 'approved' | 'disabled'
   return res?.error ?? null;
 }
 
+// Permanently delete a staff member: login + profile (GM only, via delete_staff)
+export async function deleteStaff(id: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('delete_staff', { p_id: id });
+  if (error) return error.message;
+  const res = data as { error?: string } | null;
+  return res?.error ?? null;
+}
+
 export async function fetchGmData(): Promise<GmData> {
   const [roomsRes, bookingsRes, paymentsRes, logsRes] = await Promise.all([
     supabase.from('rooms').select('id, housekeeping'),
