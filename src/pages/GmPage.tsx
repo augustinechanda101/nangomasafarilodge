@@ -14,10 +14,10 @@ import type { BookingRecord } from '../lib/staffTypes';
 
 const TABS = [
   { id: 'overall', label: 'Overall' },
-  { id: 'activity', label: 'Activity' },
-  { id: 'staff', label: 'Staff' },
-  { id: 'records', label: 'Records' },
   { id: 'finance', label: 'Finance' },
+  { id: 'staff', label: 'Staff' },
+  { id: 'activity', label: 'Activity' },
+  { id: 'records', label: 'Records' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
