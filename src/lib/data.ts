@@ -503,7 +503,7 @@ export async function deleteStaff(id: string): Promise<string | null> {
 
 export async function fetchGmData(): Promise<GmData> {
   const [roomsRes, bookingsRes, paymentsRes, logsRes] = await Promise.all([
-    supabase.from('rooms').select('id, housekeeping'),
+    supabase.from('rooms').select('id, housekeeping, locations ( name )'),
     supabase
       .from('bookings')
       .select('id, status, expected_arrival, checkout_at, stays (room_id, starts_at, ends_at)')
@@ -516,53 +516,60 @@ export async function fetchGmData(): Promise<GmData> {
   if (paymentsRes.error) throw paymentsRes.error;
   if (logsRes.error) throw logsRes.error;
 
-  const rooms = roomsRes.data ?? [];
+  const rooms = (roomsRes.data ?? []) as { id: number; housekeeping: string; locations?: { name?: string } | { name?: string }[] | null }[];
   const bookings = bookingsRes.data ?? [];
   const payments = (paymentsRes.data ?? []) as { amount: number; recorded_at: string; voided: boolean }[];
   const logs = logsRes.data ?? [];
 
   const today = lusakaDate(new Date().toISOString());
+  const now = new Date();
   const live = payments.filter((p) => !p.voided);
 
-  // --- KPIs ---
-  const inHouse = bookings.filter((b) => b.status === 'checked_in').length;
-  const arrivalsToday = bookings.filter(
-    (b) => b.status === 'booked' && lusakaDate(b.expected_arrival) === today,
-  ).length;
-  const departuresToday = bookings.filter(
-    (b) => b.status === 'checked_in' && lusakaDate(b.checkout_at) === today,
-  ).length;
+  // --- KPIs: the four operating questions ---
+  // Rooms per location (by database ID — names repeat across locations)
+  const roomLoc = new Map<number, string>();
+  const locTotals = new Map<string, number>();
+  for (const r of rooms) {
+    const loc = firstOf(r.locations)?.name ?? 'Rooms';
+    roomLoc.set(r.id, loc);
+    locTotals.set(loc, (locTotals.get(loc) ?? 0) + 1);
+  }
 
-  const paidOn = (dateStr: string) =>
-    live.filter((p) => lusakaDate(p.recorded_at) === dateStr);
-  const revToday = paidOn(today).reduce((s, p) => s + Number(p.amount), 0);
-
-  const now = new Date();
-  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-  const monthPayments = live.filter((p) => lusakaDate(p.recorded_at) >= monthStart);
-  const revMonth = monthPayments.reduce((s, p) => s + Number(p.amount), 0);
-
-  // Occupancy month-to-date: nights slept (arrival day .. day before checkout)
-  const totalRooms = rooms.length || 1;
-  const daysElapsed = Number(today.slice(8)) ; // day-of-month, "2026-11-14" → 14
-  let occupiedNights = 0;
-  for (let d = 1; d <= daysElapsed; d++) {
-    const day = `${monthStart.slice(0, 8)}${String(d).padStart(2, '0')}`;
-    for (const b of bookings) {
-      for (const st of b.stays ?? []) {
-        const a = lusakaDate(st.starts_at);
-        const c = lusakaDate(st.ends_at);
-        if (a <= day && day < c) occupiedNights++;
-      }
+  // 1. Tonight: rooms whose stay covers the night of today
+  const soldRoomIds = new Set<number>();
+  for (const b of bookings) {
+    for (const st of (b as { stays?: { room_id: number; starts_at: string; ends_at: string }[] | null }).stays ?? []) {
+      if (lusakaDate(st.starts_at) <= today && today < lusakaDate(st.ends_at)) soldRoomIds.add(st.room_id);
     }
   }
-  const occupancy = Math.round((occupiedNights / (totalRooms * daysElapsed)) * 100);
+  const soldPerLoc = new Map<string, number>();
+  for (const id of soldRoomIds) {
+    const loc = roomLoc.get(id);
+    if (loc) soldPerLoc.set(loc, (soldPerLoc.get(loc) ?? 0) + 1);
+  }
+  const tonightNote = [...locTotals.entries()]
+    .map(([loc, n]) => `${loc} ${soldPerLoc.get(loc) ?? 0}/${n}`)
+    .join(' · ');
+
+  // 2. Today's money
+  const todayPayments = live.filter((p) => lusakaDate(p.recorded_at) === today);
+  const revToday = todayPayments.reduce((s, p) => s + Number(p.amount), 0);
+
+  // 3. In house
+  const inHouse = bookings.filter((b) => (b as { status: string }).status === 'checked_in').length;
+
+  // 4. Arrivals today: expected today (arrived or still awaited)
+  const arrivalsToday = bookings.filter((b) => {
+    const row = b as { status: string; expected_arrival: string };
+    return lusakaDate(row.expected_arrival) === today && (row.status === 'booked' || row.status === 'checked_in');
+  });
+  const awaitedToday = arrivalsToday.filter((b) => (b as { status: string }).status === 'booked').length;
 
   const kpis: Kpi[] = [
-    { label: 'Revenue this month', value: `K${revMonth.toLocaleString()}`, note: `${monthPayments.length} payments · K${revToday.toLocaleString()} today` },
-    { label: 'Occupancy', value: `${occupancy}%`, note: 'month to date' },
-    { label: 'In house', value: String(inHouse), note: `${departuresToday} due out today` },
-    { label: 'Arrivals today', value: String(arrivalsToday), note: 'expected today' },
+    { label: 'Tonight', value: `${soldRoomIds.size} / ${rooms.length}`, note: tonightNote },
+    { label: "Today's money", value: `K${revToday.toLocaleString()}`, note: `${todayPayments.length} payments recorded` },
+    { label: 'In house', value: String(inHouse), note: 'bookings on property' },
+    { label: 'Arrivals today', value: String(arrivalsToday.length), note: `${awaitedToday} still awaited` },
   ];
 
   // --- Revenue, last 7 days (payments by recorded date, zero-filled) ---
@@ -570,7 +577,7 @@ export async function fetchGmData(): Promise<GmData> {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getTime() - i * DAY_MS);
     const day = lusakaDate(d.toISOString());
-    const amount = paidOn(day).reduce((s, p) => s + Number(p.amount), 0);
+    const amount = live.filter((p) => lusakaDate(p.recorded_at) === day).reduce((s, p) => s + Number(p.amount), 0);
     revenue.push({ day: day.slice(5), amount, today: i === 0 });
   }
 
