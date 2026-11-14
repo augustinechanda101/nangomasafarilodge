@@ -51,19 +51,17 @@ export default function StaffHeader({ role, who, locations, location, onLocation
       <div className="absolute right-0 top-0 flex items-center gap-3">
         {action}
         {onLocationChange && location && locations && (
-          <label className="mr-2 flex items-center gap-2 text-[13px] text-bark-muted">
-            Location:
-            <select
-              value={location}
-              onChange={(e) => onLocationChange(e.target.value)}
-              className="min-h-10 rounded-xl border border-bark-field bg-sand-card px-3 pr-9 text-sm font-semibold text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre"
-            >
-              <option value="all">All Locations</option>
-              {locations.map((l) => (
-                <option key={l.name} value={l.name}>{l.name}</option>
-              ))}
-            </select>
-          </label>
+          <select
+            value={location}
+            onChange={(e) => onLocationChange(e.target.value)}
+            className="min-h-10 rounded-xl border border-bark-field bg-sand-card px-3 pr-9 text-sm font-semibold text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre"
+            aria-label="Location"
+          >
+            <option value="all">All</option>
+            {locations.map((l) => (
+              <option key={l.name} value={l.name}>{l.name}</option>
+            ))}
+          </select>
         )}
         <span className="hidden text-[13px] text-bark-muted sm:inline">
           {profile?.name ?? who}
