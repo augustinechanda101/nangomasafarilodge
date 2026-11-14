@@ -552,8 +552,11 @@ export async function fetchGmData(): Promise<GmData> {
   const todayPayments = live.filter((p) => lusakaDate(p.recorded_at) === today);
   const revToday = todayPayments.reduce((s, p) => s + Number(p.amount), 0);
 
-  // 3. In house
-  const inHouse = bookings.filter((b) => (b as { status: string }).status === 'checked_in').length;
+  // 3. Due out tomorrow: rooms freeing up in the morning (the selling picture for tomorrow)
+  const tomorrow = lusakaDate(new Date(now.getTime() + DAY_MS).toISOString());
+  const dueOutTomorrow = bookings.filter(
+    (b) => (b as { status: string }).status === 'checked_in' && lusakaDate((b as { checkout_at: string }).checkout_at) === tomorrow,
+  ).length;
 
   // 4. Arrivals today: expected today (arrived or still awaited)
   const arrivalsToday = bookings.filter((b) => {
@@ -566,7 +569,7 @@ export async function fetchGmData(): Promise<GmData> {
     { label: 'Tonight', value: `${soldRoomIds.size} / ${rooms.length}`, note: 'rooms sold for tonight',
       columns: [...locTotals.entries()].map(([loc, n]) => ({ label: loc, value: `${soldPerLoc.get(loc) ?? 0}/${n}` })) },
     { label: "Today's money", value: `K${revToday.toLocaleString()}`, note: `${todayPayments.length} payments recorded` },
-    { label: 'In house', value: String(inHouse), note: 'bookings on property' },
+    { label: 'Due out tomorrow', value: String(dueOutTomorrow), note: 'rooms freeing up' },
     { label: 'Arrivals today', value: String(arrivalsToday.length), note: `${awaitedToday} still awaited` },
   ];
 
