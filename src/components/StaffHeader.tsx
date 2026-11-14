@@ -28,7 +28,8 @@ export default function StaffHeader({ role, who, locations, location, onLocation
   };
 
   return (
-    <header className="relative flex items-start justify-center gap-3">
+    <header className="sticky top-0 z-30 bg-sand py-2 shadow-sm">
+      <div className="relative flex items-start justify-center gap-3">
       {/* Role tag — top-left corner */}
       <div className="absolute left-0 top-0 flex items-center gap-2">
         <div className="h-[3px] w-10 bg-ochre" />
@@ -99,6 +100,7 @@ export default function StaffHeader({ role, who, locations, location, onLocation
             </>
           )}
         </div>
+      </div>
       </div>
     </header>
   );
