@@ -30,7 +30,9 @@ function nextDayLabels(n: number): string[] {
 // View-only page for general staff (bartenders, etc.) — no booking, no desk actions.
 export default function StaffPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
-  const [selectedRoom, setSelectedRoom] = useState<{ name: string; number: number } | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<{
+    name: string; number: number; bars: GridBar[]; dayLabels: string[];
+  } | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1); // 1 = 7 days, 2 = 4 days, 3 = 2 days
   const [openDates, setOpenDates] = useState<string[]>([]);
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -54,6 +56,20 @@ export default function StaffPage() {
   const roomIndexByNumber = new Map(rooms.map((r, i) => [r.name, i]));
   const numColumns = zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2;
   const dayLabels = nextDayLabels(numColumns);
+  const isOneDay = viewMode === 'today' || viewMode === 'day';
+  const splitByLocation = isOneDay && location === 'all' && locations.length > 1;
+
+  // Per-location sub-grids for the compact one-day view (re-indexed bars)
+  const locationGroups = locations.map((l) => {
+    const subIndex = new Map(l.rooms.map((r, i) => [r.name, i]));
+    const subBars = bars
+      .filter((b) => {
+        const roomName = rooms[b.room - 1]?.name;
+        return roomName !== undefined && subIndex.has(roomName);
+      })
+      .map((b) => ({ ...b, room: (subIndex.get(rooms[b.room - 1].name) ?? 0) + 1 }));
+    return { name: l.name, rooms: l.rooms, bars: subBars };
+  });
 
   const [bars, setBars] = useState<GridBar[]>([]);
 
@@ -263,6 +279,24 @@ export default function StaffPage() {
                 mode="days"
                 dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
               />
+            ) : splitByLocation ? (
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {locationGroups.map((g) => (
+                  <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
+                    <RoomGrid
+                      days={[dayLabels[0]]}
+                      rooms={g.rooms}
+                      bars={g.bars}
+                      onRoomClick={(roomNumber) => {
+                        const room = g.rooms[roomNumber - 1];
+                        setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
+                      }}
+                      zoomLevel={1}
+                    />
+                  </section>
+                ))}
+              </div>
             ) : (
               <RoomGrid
                 days={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
@@ -270,7 +304,7 @@ export default function StaffPage() {
                 bars={bars}
                 onRoomClick={(roomNumber) => {
                   const room = rooms[roomNumber - 1];
-                  setSelectedRoom({ name: room.name, number: roomNumber });
+                  setSelectedRoom({ name: room.name, number: roomNumber, bars, dayLabels: viewMode === 'overview' ? dayLabels : [dayLabels[0]] });
                 }}
                 zoomLevel={viewMode === 'overview' ? zoomLevel : 1}
               />
@@ -283,8 +317,8 @@ export default function StaffPage() {
         <RoomDetailView
           roomName={selectedRoom.name}
           roomNumber={selectedRoom.number}
-          bars={bars}
-          dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
+          bars={selectedRoom.bars}
+          dayLabels={selectedRoom.dayLabels}
           onClose={() => setSelectedRoom(null)}
         />
       )}
