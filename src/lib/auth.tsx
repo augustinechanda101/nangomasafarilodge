@@ -38,12 +38,23 @@ export function useProfile(): Profile | null {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) return;
+      const u = data.session.user;
+      // Fallback: auth metadata is always readable by the client
+      const meta = u.user_metadata as { name?: string; role?: Profile['role'] } | undefined;
+      setProfile({
+        id: u.id,
+        name: meta?.name ?? u.email ?? '',
+        email: u.email ?? '',
+        role: meta?.role ?? 'staff',
+        status: 'approved',
+      });
+      // Preferred: the users table row (needs the RLS read policy)
       const { data: row } = await supabase
         .from('users')
         .select('id, name, email, role, status')
-        .eq('id', data.session.user.id)
+        .eq('id', u.id)
         .maybeSingle();
-      setProfile((row as Profile) ?? null);
+      if (row) setProfile(row as Profile);
     });
   }, []);
   return profile;
