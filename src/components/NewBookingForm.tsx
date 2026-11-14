@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { BookingDraft } from '../lib/staffTypes';
 
 interface Props {
@@ -39,6 +39,13 @@ export default function NewBookingForm({ locations, initialLocation, initialRoom
   const set = <K extends keyof BookingDraft>(k: K, v: BookingDraft[K]) => setD((p) => ({ ...p, [k]: v }));
 
   const locationRooms = locations.find((l) => l.name === d.location)?.rooms ?? [];
+
+  // Locations load async — pick the first one (or the prefilled room's) once they arrive
+  useEffect(() => {
+    if (!d.location && locations.length > 0) {
+      setD((p) => ({ ...p, location: initialLocation ?? locations[0].name }));
+    }
+  }, [locations, d.location, initialLocation]);
 
   const toggleRoom = (name: string) =>
     set('rooms', d.rooms.includes(name) ? d.rooms.filter((r) => r !== name) : [...d.rooms, name]);
