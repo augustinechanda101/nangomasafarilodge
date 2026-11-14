@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../lib/supabase';
 import type { GridRoom } from '../lib/staffTypes';
 
 interface Props {
@@ -24,23 +25,66 @@ function localISO(d: Date): string {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
-// Deterministic sample occupancy until real booking data exists
-function occupancyFor(year: number, month: number, day: number, total: number, seedOffset = 0): number {
-  const d = new Date(year, month, day);
-  const dow = d.getDay();
-  const weekend = dow === 0 || dow === 5 || dow === 6;
-  const base = weekend ? 0.75 : 0.45;
-  const jitter = ((day * 31 + month * 7 + year + seedOffset) % 6) / 20;
-  return Math.min(total, Math.round(total * Math.min(1, base + jitter)));
-}
-
-const seedOf = (s: string) => [...s].reduce((a, c) => a + c.charCodeAt(0), 0);
-
 function occColor(pct: number): string {
   if (pct === 0) return 'bg-sand-line';
   if (pct < 50) return 'bg-ochre-chip';
   if (pct < 100) return 'bg-ochre';
   return 'bg-brick-ink';
+}
+
+// Real per-day, per-location booked-room counts for the displayed month
+function useMonthOccupancy(year: number, month: number) {
+  const [occupancy, setOccupancy] = useState<Map<string, Map<string, number>>>(new Map());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const monthStart = new Date(year, month, 1);
+      const monthEnd = new Date(year, month + 1, 1);
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('id, status, stays (room_id, starts_at, ends_at, rooms ( number, locations ( name ) ))')
+        .neq('status', 'cancelled');
+      if (cancelled) return;
+      if (error) {
+        console.error('month occupancy failed', error);
+        setOccupancy(new Map());
+        setLoading(false);
+        return;
+      }
+
+      const map = new Map<string, Map<string, number>>();
+      for (const b of data ?? []) {
+        for (const stay of b.stays ?? []) {
+          const start = new Date(stay.starts_at);
+          const end = new Date(stay.ends_at);
+          if (end <= monthStart || start >= monthEnd) continue;
+          const room = stay.rooms?.[0];
+          if (!room) continue;
+          const locName = room.locations?.[0]?.name ?? 'Rooms';
+          const cur = new Date(start);
+          while (cur < end) {
+            if (cur >= monthStart && cur < monthEnd) {
+              const key = cur.toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' });
+              if (!map.has(key)) map.set(key, new Map());
+              const locMap = map.get(key)!;
+              locMap.set(locName, (locMap.get(locName) ?? 0) + 1);
+            }
+            cur.setDate(cur.getDate() + 1);
+          }
+        }
+      }
+      setOccupancy(map);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [year, month]);
+
+  return { occupancy, loading };
 }
 
 export default function MonthlyGrid({ rooms, onDateSelect, selected }: Props) {
@@ -49,6 +93,8 @@ export default function MonthlyGrid({ rooms, onDateSelect, selected }: Props) {
   const [month, setMonth] = useState(today.getMonth());
   const [internalSelected, setInternalSelected] = useState<string | null>(localISO(today));
   const sel = selected !== undefined ? selected : internalSelected;
+
+  const { occupancy, loading } = useMonthOccupancy(year, month);
 
   const total = daysInMonth(year, month);
   // Day of week of the 1st, converted to Monday-based index (Mon=0 … Sun=6)
@@ -127,10 +173,11 @@ export default function MonthlyGrid({ rooms, onDateSelect, selected }: Props) {
         {cells.map((date, i) => {
           if (!date) return <div key={i} />;
           const dateStr = localISO(date);
-          // Per-location occupancy for this day
+          // Real per-location booked counts for this day
+          const dayLocs = occupancy.get(dateStr);
           const locOccs = groups.map(([loc, locRooms]) => ({
             loc,
-            occ: occupancyFor(date.getFullYear(), date.getMonth(), date.getDate(), locRooms.length, seedOf(loc)),
+            occ: dayLocs?.get(loc) ?? 0,
             n: locRooms.length,
           }));
           const occ = locOccs.reduce((a, s) => a + s.occ, 0);
@@ -169,11 +216,15 @@ export default function MonthlyGrid({ rooms, onDateSelect, selected }: Props) {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              {locOccs.map((s) => (
-                <span key={s.loc} className="text-[10px] leading-tight text-bark-muted">
-                  {s.loc} {s.occ}/{s.n}
-                </span>
-              ))}
+              {loading ? (
+                <span className="text-[10px] text-bark-muted">…</span>
+              ) : (
+                locOccs.map((s) => (
+                  <span key={s.loc} className="text-[10px] leading-tight text-bark-muted">
+                    {s.loc} {s.occ}/{s.n}
+                  </span>
+                ))
+              )}
             </button>
           );
         })}
