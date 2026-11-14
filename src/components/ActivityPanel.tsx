@@ -127,7 +127,7 @@ export default function ActivityPanel() {
   );
 
   const list = (tall: boolean) => (
-    <div className={`overflow-y-auto overscroll-contain ${tall ? 'mt-4 flex-1' : 'mt-3 max-h-[11rem]'}`}>
+    <div className={`overflow-y-auto overscroll-contain ${tall ? 'mt-4 flex-1' : 'mt-3 min-h-0 flex-1'}`}>
       {sorted === null ? (
         <div className="flex justify-center py-8">
           <span className="h-7 w-7 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
@@ -161,7 +161,7 @@ export default function ActivityPanel() {
 
   return (
     <>
-      <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
+      <section className="flex h-[19rem] flex-col rounded-2xl border border-sand-line bg-sand-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-display text-xl font-semibold">Activity — {periodLabel}</h3>
           <div className="flex items-center gap-2">
