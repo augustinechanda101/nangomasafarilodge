@@ -25,8 +25,9 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5 2xl:gap-6">
           <Link
             to="/staff"
-            className="flex min-h-32 items-center justify-center rounded-2xl bg-bark p-6 transition-transform hover:scale-105 hover:shadow-lg"
+            className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl bg-bark p-6 transition-transform hover:scale-105 hover:shadow-lg"
           >
+            <img src="/staff-icon.svg" alt="" className="h-10 w-10" />
             <h3 className="font-sans text-2xl font-semibold text-sand-card">Staff</h3>
           </Link>
 
