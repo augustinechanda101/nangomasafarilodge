@@ -32,8 +32,9 @@ export default function LandingPage() {
 
           <Link
             to="/reception"
-            className="flex min-h-32 items-center justify-center rounded-2xl bg-bark p-6 transition-transform hover:scale-105 hover:shadow-lg"
+            className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl bg-bark p-6 transition-transform hover:scale-105 hover:shadow-lg"
           >
+            <img src="/reception-icon.svg" alt="" className="h-10 w-10" />
             <h3 className="font-sans text-2xl font-semibold text-sand-card">Reception</h3>
           </Link>
 
