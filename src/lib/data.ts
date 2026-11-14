@@ -118,11 +118,13 @@ function paymentOf(b: BookingRow): { amount?: number; method?: string } {
   return p ? { amount: Number(p.amount), method: p.method } : {};
 }
 
-// Overview window: bars positioned by day offset within the visible window
+// Overview window: bars positioned by day offset within the visible window.
+// Rooms are indexed by database ID — room NAMES repeat across locations
+// (Dam Lodge and Farm House both have "Room 1"), so name-based maps collide.
 export async function fetchWindowBars(
   windowStartISO: string,
   numDays: number,
-  roomIndexByNumber: Map<string, number>,
+  roomIndexById: Map<number, number>,
 ): Promise<GridBar[]> {
   const rows = await fetchBookingRows();
   const windowStart = new Date(windowStartISO + 'T00:00:00').getTime();
@@ -130,8 +132,7 @@ export async function fetchWindowBars(
 
   for (const b of rows) {
     for (const stay of b.stays ?? []) {
-      const roomNumber = stay.rooms?.[0]?.number;
-      const idx = roomNumber ? roomIndexByNumber.get(roomNumber) : undefined;
+      const idx = roomIndexById.get(stay.room_id);
       if (idx === undefined) continue;
 
       const startDay = Math.floor((new Date(stay.starts_at).getTime() - windowStart) / DAY_MS);

@@ -72,7 +72,12 @@ export default function StaffPage() {
       : locations.find((l) => l.name === location)?.rooms ?? []),
     [location, locations],
   );
-  const roomIndexByNumber = useMemo(() => new Map(rooms.map((r, i) => [r.name, i])), [rooms]);
+  // Index rooms by database ID — room names repeat across locations
+  const roomIndexById = useMemo(() => {
+    const m = new Map<number, number>();
+    rooms.forEach((r, i) => { if (r.id !== undefined) m.set(r.id, i); });
+    return m;
+  }, [rooms]);
   const numColumns = zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2;
   const dayLabels = nextDayLabels(numColumns);
   const isOneDay = viewMode === 'today' || viewMode === 'day';
@@ -83,7 +88,12 @@ export default function StaffPage() {
   // Availability per location for the current window, incl. family rooms
   // (hold/maintenance/unavailable rooms are not bookable, so not free)
   const locationInfo = locations.map((l) => {
-    const isFree = (r: GridRoom) => r.state === 'Available' && !bars.some((b) => rooms[b.room - 1]?.name === r.name);
+    const isFree = (r: GridRoom) =>
+      r.state === 'Available' && !bars.some((b) => {
+        const br = rooms[b.room - 1];
+        if (!br) return false;
+        return br.id !== undefined && r.id !== undefined ? br.id === r.id : br.name === r.name;
+      });
     const free = l.rooms.filter(isFree).length;
     const familyRooms = l.rooms.filter((r) => r.type === 'Family Room');
     const familyFree = familyRooms.filter(isFree).length;
@@ -105,10 +115,10 @@ export default function StaffPage() {
   const loadBars = useCallback(() => {
     const windowStart = viewMode === 'day' && activeDate ? activeDate : localISO(new Date());
     const windowDays = viewMode === 'overview' ? numColumns : 1;
-    fetchWindowBars(windowStart, windowDays, roomIndexByNumber)
+    fetchWindowBars(windowStart, windowDays, roomIndexById)
       .then((next) => setBars(next))
       .catch((e) => console.error('bars fetch failed', e));
-  }, [viewMode, activeDate, numColumns, roomIndexByNumber]);
+  }, [viewMode, activeDate, numColumns, roomIndexById]);
 
   useEffect(() => {
     loadBars();
