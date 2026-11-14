@@ -138,22 +138,6 @@ export default function ReceptionPage() {
           locations={locations}
           location={location}
           onLocationChange={setLocation}
-          action={
-            <>
-              <Link
-                to="/reception/booking"
-                className="min-h-10 rounded-xl bg-ochre px-4 text-sm font-semibold text-sand-card hover:bg-bark-deep transition-colors flex items-center justify-center"
-              >
-                New Booking
-              </Link>
-              <Link
-                to="/reception/records"
-                className="min-h-10 rounded-xl bg-bark-soft px-4 text-sm font-semibold text-bark hover:bg-bark-off transition-colors flex items-center justify-center"
-              >
-                Records
-              </Link>
-            </>
-          }
           menuItems={
             <>
               <Link
@@ -167,6 +151,12 @@ export default function ReceptionPage() {
                 className="min-h-10 rounded-lg px-3 text-left text-sm font-semibold text-bark hover:bg-sand-line"
               >
                 Logs
+              </Link>
+              <Link
+                to="/reception/records"
+                className="min-h-10 rounded-lg px-3 text-left text-sm font-semibold text-bark hover:bg-sand-line"
+              >
+                Records
               </Link>
             </>
           }
@@ -303,6 +293,12 @@ export default function ReceptionPage() {
               </button>
             </div>
           )}
+          <Link
+            to="/reception/booking"
+            className="ml-auto min-h-10 rounded-xl bg-ochre px-4 text-sm font-semibold text-sand-card hover:bg-bark-deep transition-colors flex items-center justify-center"
+          >
+            New Booking
+          </Link>
         </div>
 
         <div className="flex flex-col items-start gap-4 lg:flex-row">
