@@ -408,6 +408,40 @@ export async function fetchActivityRange(
     .reverse();
 }
 
+// Everything the booking form needs to compute per-date vacancies client-side
+export interface VacancyRoom { id: number; number: string; state: string; locationName: string }
+export interface VacancyData {
+  rooms: VacancyRoom[];
+  stays: { room_id: number; starts_at: string; ends_at: string }[];
+}
+
+export async function fetchVacancyData(): Promise<VacancyData> {
+  const [roomsRes, bookingsRes] = await Promise.all([
+    supabase.from('rooms').select('id, number, housekeeping, locations ( name )'),
+    supabase
+      .from('bookings')
+      .select('stays (room_id, starts_at, ends_at)')
+      .neq('status', 'cancelled'),
+  ]);
+  if (roomsRes.error) throw roomsRes.error;
+  if (bookingsRes.error) throw bookingsRes.error;
+
+  const rooms: VacancyRoom[] = (roomsRes.data ?? []).map((r) => {
+    const row = r as { id: number; number: string; housekeeping: string; locations?: { name?: string } | { name?: string }[] | null };
+    return {
+      id: row.id,
+      number: row.number,
+      state: row.housekeeping,
+      locationName: firstOf(row.locations)?.name ?? '',
+    };
+  });
+  const stays = (bookingsRes.data ?? []).flatMap((b) => {
+    const row = b as { stays?: { room_id: number; starts_at: string; ends_at: string }[] | null };
+    return row.stays ?? [];
+  });
+  return { rooms, stays };
+}
+
 // Employee list for the GM's Staff tab (needs the "authenticated read users" policy)
 export async function fetchStaffList(): Promise<StaffMember[]> {
   const { data, error } = await supabase

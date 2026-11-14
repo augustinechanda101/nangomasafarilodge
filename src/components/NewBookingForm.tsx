@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { BookingDraft } from '../lib/staffTypes';
+import type { VacancyData } from '../lib/data';
 
 interface Props {
   locations: { name: string; rooms: string[] }[];
@@ -10,6 +11,7 @@ interface Props {
   onHold: (draft: BookingDraft) => void;
   onSaveAndCheckIn?: (draft: BookingDraft) => void;
   busy?: boolean;
+  vacancy?: VacancyData | null;
 }
 
 const FIELD =
@@ -31,7 +33,7 @@ function checkoutOf(arrival: string, nights: number): string {
   return d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function NewBookingForm({ locations, initialLocation, initialRoom, initialDate, onSave, onHold, onSaveAndCheckIn, busy }: Props) {
+export default function NewBookingForm({ locations, initialLocation, initialRoom, initialDate, onSave, onHold, onSaveAndCheckIn, busy, vacancy }: Props) {
   const [mode, setMode] = useState<'single' | 'multiple'>('single');
   const [d, setD] = useState<BookingDraft>({
     location: initialLocation ?? locations[0]?.name ?? '',
@@ -53,6 +55,24 @@ export default function NewBookingForm({ locations, initialLocation, initialRoom
     set('rooms', d.rooms.includes(name) ? d.rooms.filter((r) => r !== name) : [...d.rooms, name]);
 
   const checkout = checkoutOf(d.arrival, d.nights);
+
+  // Per-room status FOR THE SELECTED DATES: a room booked tonight is still
+  // selectable for next week — availability is date-scoped, not global
+  const roomStatus = (roomName: string): 'free' | 'booked' | 'hold' | 'maintenance' | 'unavailable' => {
+    const room = vacancy?.rooms.find((r) => r.locationName === d.location && r.number === roomName);
+    if (!room) return 'free';
+    if (room.state !== 'ready') return room.state as 'hold' | 'maintenance' | 'unavailable';
+    if (!d.arrival || !vacancy) return 'free';
+    const arrival = new Date(d.arrival + 'T' + (d.arrivalTime || '14:00'));
+    const checkoutDate = new Date(d.arrival + 'T00:00:00');
+    checkoutDate.setDate(checkoutDate.getDate() + d.nights);
+    checkoutDate.setHours(10, 0, 0, 0);
+    const conflict = vacancy.stays.some(
+      (s) => s.room_id === room.id && new Date(s.starts_at) < checkoutDate && new Date(s.ends_at) > arrival,
+    );
+    return conflict ? 'booked' : 'free';
+  };
+
   const canHold = d.guestName.trim() !== '' && d.arrival !== '' && d.nights >= 1 && d.rooms.length > 0;
   const canSave = canHold && d.phone.trim() !== '' && Number(d.amount) > 0;
   const [saved, setSaved] = useState(false);
@@ -141,24 +161,37 @@ export default function NewBookingForm({ locations, initialLocation, initialRoom
             onChange={(e) => set('rooms', e.target.value ? [e.target.value] : [])}
           >
             <option value="" disabled>Select a room</option>
-            {locationRooms.map((r) => <option key={r}>{r}</option>)}
+            {locationRooms.map((r) => {
+              const st = roomStatus(r);
+              const blocked = st !== 'free' && !d.rooms.includes(r);
+              return (
+                <option key={r} value={r} disabled={blocked}>
+                  {r}{st !== 'free' ? ` — ${st === 'booked' ? 'booked for those dates' : st}` : ''}
+                </option>
+              );
+            })}
           </select>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {locationRooms.map((r) => {
+              const st = roomStatus(r);
               const on = d.rooms.includes(r);
+              const blocked = st !== 'free' && !on;
               return (
                 <button
                   key={r}
                   type="button"
+                  disabled={blocked}
                   onClick={() => toggleRoom(r)}
                   className={`min-h-9 rounded-full px-3 text-xs font-semibold transition-colors ${
                     on
                       ? 'bg-bark-deep text-sand-card'
+                      : blocked
+                      ? 'cursor-not-allowed bg-bark-off text-bark-offink line-through'
                       : 'border border-bark-field bg-sand-card text-bark hover:bg-bark-soft'
                   }`}
                 >
-                  {r}
+                  {r}{st !== 'free' ? ` · ${st}` : ''}
                 </button>
               );
             })}

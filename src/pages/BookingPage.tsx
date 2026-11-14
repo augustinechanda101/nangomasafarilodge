@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import NewBookingForm from '../components/NewBookingForm';
-import { bookingAction, createBooking, fetchLocationsWithRooms, holdRooms, type LocationWithRooms } from '../lib/data';
+import { bookingAction, createBooking, fetchLocationsWithRooms, fetchVacancyData, holdRooms, type LocationWithRooms, type VacancyData } from '../lib/data';
 import { LOCATIONS } from '../lib/sampleStaff';
 
 export default function BookingPage() {
@@ -14,6 +14,13 @@ export default function BookingPage() {
   const [saved, setSaved] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [vacancy, setVacancy] = useState<VacancyData | null>(null);
+
+  useEffect(() => {
+    fetchVacancyData()
+      .then(setVacancy)
+      .catch((e) => console.error('vacancy fetch failed', e));
+  }, []);
 
   useEffect(() => {
     fetchLocationsWithRooms()
@@ -23,6 +30,10 @@ export default function BookingPage() {
         setLocations(LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })));
       });
   }, []);
+
+  const refreshVacancy = () => {
+    fetchVacancyData().then(setVacancy).catch(() => {});
+  };
 
   const save = async (draft: Parameters<typeof createBooking>[1]) => {
     setBusy(true);
@@ -40,6 +51,7 @@ export default function BookingPage() {
       setSaveError(result.error);
     } else if ('invoice' in result) {
       setSaved(result.invoice);
+      refreshVacancy();
     }
   };
 
@@ -72,6 +84,7 @@ export default function BookingPage() {
       return;
     }
     setSaved(`${result.invoice} — guest checked in`);
+    refreshVacancy();
   };
 
   // Hold: room state 'hold' + a 3-hour holds row — NOT a booking
@@ -100,6 +113,7 @@ export default function BookingPage() {
       return;
     }
     setSaved(`Room${draft.rooms.length > 1 ? 's' : ''} held for 3 hours`);
+    refreshVacancy();
   };
 
   return (
@@ -127,6 +141,7 @@ export default function BookingPage() {
           onHold={hold}
           onSaveAndCheckIn={saveAndCheckIn}
           busy={busy}
+          vacancy={vacancy}
         />
       </div>
     </div>
