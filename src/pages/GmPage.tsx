@@ -1,19 +1,26 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchGmData, type GmData } from '../lib/data';
+import { fetchGmData, fetchRecords, type GmData } from '../lib/data';
 import { useProfile } from '../lib/auth';
 import ActivityFeed from '../components/ActivityFeed';
+import FinanceView from '../components/FinanceView';
 import KpiCard from '../components/KpiCard';
 import LoadingScreen from '../components/LoadingScreen';
+import LogsPanel from '../components/LogsPanel';
+import RecordsView from '../components/RecordsView';
 import RevenueChart from '../components/RevenueChart';
 import StaffHeader from '../components/StaffHeader';
 import StaffManager from '../components/StaffManager';
 import StaffTotals from '../components/StaffTotals';
+import type { BookingRecord } from '../lib/staffTypes';
 
 const TABS = [
   { id: 'overall', label: 'Overall' },
   { id: 'activity', label: 'Activity' },
   { id: 'staff', label: 'Staff' },
+  { id: 'records', label: 'Records' },
+  { id: 'logs', label: 'Logs' },
+  { id: 'finance', label: 'Finance' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -23,12 +30,22 @@ export default function GmPage() {
   const [data, setData] = useState<GmData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabId>('overall');
+  const [records, setRecords] = useState<BookingRecord[] | null>(null);
 
   useEffect(() => {
     fetchGmData()
       .then(setData)
       .catch((e) => setError(e.message ?? 'Failed to load'));
   }, []);
+
+  // Records/Finance share one booking-history fetch, loaded when first needed
+  useEffect(() => {
+    if ((tab === 'records' || tab === 'finance') && records === null) {
+      fetchRecords()
+        .then(setRecords)
+        .catch((e) => console.error('records fetch failed', e));
+    }
+  }, [tab, records]);
 
   if (error) {
     return (
@@ -81,6 +98,30 @@ export default function GmPage() {
         )}
 
         {tab === 'staff' && <StaffManager />}
+
+        {tab === 'records' && (
+          <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
+            {records === null ? (
+              <div className="flex justify-center py-8">
+                <span className="h-7 w-7 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
+              </div>
+            ) : (
+              <RecordsView records={records} />
+            )}
+          </section>
+        )}
+
+        {tab === 'logs' && <LogsPanel />}
+
+        {tab === 'finance' && (
+          records === null ? (
+            <div className="flex justify-center py-8">
+              <span className="h-7 w-7 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
+            </div>
+          ) : (
+            <FinanceView records={records} />
+          )
+        )}
       </div>
     </div>
   );
