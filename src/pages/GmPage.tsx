@@ -126,7 +126,7 @@ export default function GmPage() {
               <span className="h-7 w-7 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
             </div>
           ) : (
-            <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
               <FinanceView records={records} />
             </div>
           )
