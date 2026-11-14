@@ -160,7 +160,7 @@ export async function fetchRecords(): Promise<BookingRecord[]> {
         phone: b.guest_phone ?? '',
         room: room?.number ?? `#${stay.room_id}`,
         location: room?.locations?.[0]?.name ?? '',
-        checkIn: b.expected_arrival.slice(0, 10),
+        checkIn: new Date(b.expected_arrival).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' }),
         nights,
         amount: p ? Number(p.amount) : 0,
         method: p?.method ?? '',
