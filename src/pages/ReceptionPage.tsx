@@ -66,6 +66,9 @@ export default function ReceptionPage() {
   const isOneDay = viewMode === 'today' || viewMode === 'day';
   const splitByLocation = isOneDay && location === 'all' && locations.length > 1;
 
+  const [bars, setBars] = useState<GridBar[]>([]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+
   // Per-location sub-grids for the compact one-day view (re-indexed bars)
   const locationGroups = locations.map((l) => {
     const subIndex = new Map(l.rooms.map((r, i) => [r.name, i]));
@@ -77,9 +80,6 @@ export default function ReceptionPage() {
       .map((b) => ({ ...b, room: (subIndex.get(rooms[b.room - 1].name) ?? 0) + 1 }));
     return { name: l.name, rooms: l.rooms, bars: subBars };
   });
-
-  const [bars, setBars] = useState<GridBar[]>([]);
-  const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
   const loadAlerts = useCallback(() => {
     fetchAlerts()
