@@ -248,7 +248,14 @@ export default function StaffPage() {
                 </h3>
                 {viewMode === 'overview' && (
                   <span className="text-[13px] font-semibold text-savanna-ink">
-                    {locationInfo.map((a) => `${a.name} ${a.free}/${a.total}`).join(' · ')}
+                    {location === 'all'
+                      ? locationInfo.map((a) => `${a.name} ${a.free}/${a.total}`).join(' · ')
+                      : (() => {
+                          const info = locationInfo.find((x) => x.name === location);
+                          return info
+                            ? `${info.free}/${info.total} free${info.familyTotal > 0 ? ` · Family ${info.familyFree}/${info.familyTotal}` : ''}`
+                            : '';
+                        })()}
                   </span>
                 )}
                 <span className="text-[13px] text-bark-muted">
