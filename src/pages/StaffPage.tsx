@@ -100,15 +100,21 @@ export default function StaffPage() {
     return { name: l.name, free, total: l.rooms.length, familyFree, familyTotal: familyRooms.length };
   });
 
-  // Per-location sub-grids for the compact one-day view (re-indexed bars)
+  // Per-location sub-grids for the compact one-day view (re-indexed bars).
+  // Grouped by room ID — names repeat across locations, so name matching
+  // would copy the same booking into both lodges' panels.
   const locationGroups = locations.map((l) => {
-    const subIndex = new Map(l.rooms.map((r, i) => [r.name, i]));
+    const subIndex = new Map<string | number, number>();
+    l.rooms.forEach((r, i) => subIndex.set(r.id ?? r.name, i));
     const subBars = bars
       .filter((b) => {
-        const roomName = rooms[b.room - 1]?.name;
-        return roomName !== undefined && subIndex.has(roomName);
+        const br = rooms[b.room - 1];
+        return br !== undefined && subIndex.has(br.id ?? br.name);
       })
-      .map((b) => ({ ...b, room: (subIndex.get(rooms[b.room - 1].name) ?? 0) + 1 }));
+      .map((b) => {
+        const br = rooms[b.room - 1];
+        return { ...b, room: (subIndex.get(br.id ?? br.name) ?? 0) + 1 };
+      });
     return { name: l.name, rooms: l.rooms, bars: subBars };
   });
 
