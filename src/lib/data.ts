@@ -61,6 +61,8 @@ interface BookingRow {
   status: string;
   expected_arrival: string;
   checkout_at: string;
+  checked_in_at: string | null;
+  checked_out_at: string | null;
   stays: {
     room_id: number;
     starts_at: string;
@@ -73,7 +75,7 @@ interface BookingRow {
 async function fetchBookingRows(): Promise<BookingRow[]> {
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, invoice, guest_name, status, expected_arrival, checkout_at, stays (room_id, starts_at, ends_at, rooms ( number )), payments (amount, method, voided)')
+    .select('id, invoice, guest_name, status, expected_arrival, checkout_at, checked_in_at, checked_out_at, stays (room_id, starts_at, ends_at, rooms ( number )), payments (amount, method, voided)')
     .neq('status', 'cancelled');
   if (error) throw error;
   return data ?? [];
@@ -86,13 +88,21 @@ function kindFor(status: string): GridBar['kind'] {
     : 'hold';
 }
 
+const lusakaTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' });
+
 function labelFor(b: BookingRow): string {
   if (b.status === 'booked') {
     const d = new Date(b.expected_arrival);
     const h = d.getHours();
     return `${b.guest_name} · arrives ${((h % 12) || 12)}:${String(d.getMinutes()).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
   }
-  if (b.status === 'checked_out') return `${b.guest_name} · out 10:00`;
+  if (b.status === 'checked_in') {
+    return b.checked_in_at ? `${b.guest_name} · checked in ${lusakaTime(b.checked_in_at)}` : `${b.guest_name} · checked in`;
+  }
+  if (b.status === 'checked_out') {
+    return b.checked_out_at ? `${b.guest_name} · checked out ${lusakaTime(b.checked_out_at)}` : `${b.guest_name} · checked out`;
+  }
   return `${b.guest_name} · ${b.status.replace('_', ' ')}`;
 }
 
@@ -160,7 +170,7 @@ export async function fetchRecords(): Promise<BookingRecord[]> {
         phone: b.guest_phone ?? '',
         room: room?.number ?? `#${stay.room_id}`,
         location: room?.locations?.[0]?.name ?? '',
-        checkIn: new Date(b.expected_arrival).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' }),
+        checkIn: `${new Date(b.expected_arrival).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' })} ${lusakaTime(b.expected_arrival)}`,
         nights,
         amount: p ? Number(p.amount) : 0,
         method: p?.method ?? '',
