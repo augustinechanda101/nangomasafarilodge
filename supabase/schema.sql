@@ -38,10 +38,10 @@ CREATE TABLE bookings (
   status           TEXT NOT NULL DEFAULT 'booked'
                    CHECK (status IN ('booked','checked_in','checked_out','cancelled')),
   checked_in_at    TIMESTAMPTZ,
-  checked_in_by    INT REFERENCES users(id),
+  checked_in_by    UUID REFERENCES users(id),
   checked_out_at   TIMESTAMPTZ,
-  checked_out_by   INT REFERENCES users(id),
-  created_by       INT REFERENCES users(id),
+  checked_out_by   UUID REFERENCES users(id),
+  created_by       UUID REFERENCES users(id),
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -73,7 +73,7 @@ CREATE TABLE holds (
   ends_at     TIMESTAMPTZ NOT NULL,
   note        TEXT,
   expires_at  TIMESTAMPTZ NOT NULL,
-  set_by      INT REFERENCES users(id),
+  set_by      UUID REFERENCES users(id),
   released    BOOLEAN NOT NULL DEFAULT false
 );
 
@@ -86,11 +86,11 @@ CREATE TABLE payments (
   method       TEXT NOT NULL,
   reference    TEXT,
   invoice      TEXT,
-  recorded_by  INT REFERENCES users(id),
+  recorded_by  UUID REFERENCES users(id),
   recorded_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   voided       BOOLEAN NOT NULL DEFAULT false,
   void_reason  TEXT,
-  voided_by    INT REFERENCES users(id)
+  voided_by    UUID REFERENCES users(id)
 );
 
 CREATE INDEX payments_booking_idx ON payments (booking_id);
@@ -98,7 +98,7 @@ CREATE INDEX payments_invoice_idx ON payments (invoice);
 
 CREATE TABLE activity_log (
   id          BIGSERIAL PRIMARY KEY,
-  user_id     INT REFERENCES users(id),
+  user_id     UUID REFERENCES users(id),
   action      TEXT NOT NULL,
   booking_id  INT REFERENCES bookings(id),
   room_id     INT REFERENCES rooms(id),
