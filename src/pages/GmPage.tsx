@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchGmData, fetchRecords, type GmData } from '../lib/data';
 import { useProfile } from '../lib/auth';
-import ActivityFeed from '../components/ActivityFeed';
+import ActivityPanel from '../components/ActivityPanel';
 import FinanceView from '../components/FinanceView';
 import KpiCard from '../components/KpiCard';
 import LoadingScreen from '../components/LoadingScreen';
@@ -101,7 +101,7 @@ export default function GmPage() {
 
         {tab === 'activity' && (
           <div className="flex flex-col gap-4">
-            <ActivityFeed items={data.feed} />
+            <ActivityPanel />
             <StaffTotals rows={data.staffTotals} />
           </div>
         )}

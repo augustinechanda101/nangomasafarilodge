@@ -318,8 +318,8 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
 const lusakaDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' });
 
-export interface GmFeedItem { id: number; text: string; when: string }
 export interface StaffActions { name: string; actions: number }
+export interface ActivityEntry { id: number; text: string; date: string; time: string }
 export interface StaffMember {
   id: string;
   name: string;
@@ -332,7 +332,34 @@ export interface GmData {
   kpis: Kpi[];
   revenue: RevenuePoint[];
   staffTotals: StaffActions[];
-  feed: GmFeedItem[];
+}
+
+// Activity entries for a Lusaka date range (inclusive), chronological.
+// scope 'reception': desk activities only — staff-account actions live in management Logs.
+export async function fetchActivityRange(
+  fromStr: string,
+  toStr: string,
+  scope: 'reception' | 'management' = 'reception',
+): Promise<ActivityEntry[]> {
+  const { data, error } = await supabase
+    .from('activity_log')
+    .select('id, action, at')
+    .order('at', { ascending: false });
+  if (error) throw error;
+
+  return (data ?? [])
+    .filter((l) => {
+      const d = lusakaDate(l.at);
+      return d >= fromStr && d <= toStr;
+    })
+    .filter((l) => scope === 'management' || !l.action.startsWith('staff '))
+    .map((l) => ({
+      id: l.id,
+      text: l.action,
+      date: lusakaDate(l.at),
+      time: new Date(l.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' }),
+    }))
+    .reverse();
 }
 
 // Employee list for the GM's Staff tab (needs the "authenticated read users" policy)
@@ -469,18 +496,5 @@ export async function fetchGmData(): Promise<GmData> {
     .map(([name, actions]) => ({ name, actions }))
     .sort((a, b) => b.actions - a.actions);
 
-  // --- Recent activity feed: reception/desk activities only ---
-  // Staff-account actions (added/suspended/deleted) live in the management Logs tab.
-  const feed: GmFeedItem[] = logs
-    .filter((l) => !l.action.startsWith('staff '))
-    .slice(0, 20)
-    .map((l) => ({
-    id: l.id,
-    text: l.action,
-    when: lusakaDate(l.at) === today
-      ? new Date(l.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' })
-      : new Date(l.at).toLocaleString('en-GB', { timeZone: 'Africa/Lusaka', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
-  }));
-
-  return { kpis, revenue, staffTotals, feed };
+  return { kpis, revenue, staffTotals };
 }
