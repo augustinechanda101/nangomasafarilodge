@@ -10,19 +10,19 @@ function localISO(d: Date): string {
 }
 
 // Self-fetching log panel: owns the date state and loads that day's real log.
-// Used by the Reception Logs page and the GM Logs tab.
-export default function LogsPanel() {
+// scope 'reception' = desk operations; 'management' = everything incl. staff actions.
+export default function LogsPanel({ scope = 'reception' }: { scope?: 'reception' | 'management' }) {
   const [date, setDate] = useState(localISO(new Date()));
   const [logs, setLogs] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    fetchLogs(date)
+    fetchLogs(date, scope)
       .then(setLogs)
       .catch((e) => console.error('logs fetch failed', e))
       .finally(() => setLoading(false));
-  }, [date]);
+  }, [date, scope]);
 
   return (
     <section className="rounded-2xl border border-sand-line bg-sand-card p-4">

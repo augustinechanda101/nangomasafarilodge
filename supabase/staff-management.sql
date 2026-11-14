@@ -64,6 +64,9 @@ BEGIN
   INSERT INTO users (id, name, email, role, status, department)
   VALUES (v_id, p_name, lower(p_email), p_role, 'approved', v_dept);
 
+  INSERT INTO activity_log (user_id, action)
+  VALUES (auth.uid(), 'staff added: ' || p_name || ' (' || v_dept || ') — by ' || (SELECT name FROM users WHERE id = auth.uid()));
+
   RETURN json_build_object('id', v_id);
 EXCEPTION
   WHEN OTHERS THEN

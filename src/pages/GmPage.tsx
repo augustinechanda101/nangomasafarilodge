@@ -118,7 +118,7 @@ export default function GmPage() {
           </section>
         )}
 
-        {tab === 'logs' && <LogsPanel />}
+        {tab === 'logs' && <LogsPanel scope="management" />}
 
         {tab === 'finance' && (
           records === null ? (

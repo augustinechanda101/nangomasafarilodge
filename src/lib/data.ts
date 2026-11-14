@@ -189,8 +189,10 @@ export async function fetchRecords(): Promise<BookingRecord[]> {
   return records;
 }
 
-// Real event log from the activity_log table, filtered to the selected Lusaka date
-export async function fetchLogs(dateStr: string): Promise<LogEvent[]> {
+// Real event log from the activity_log table, filtered to the selected Lusaka date.
+// scope 'reception': desk operations only (bookings, check-ins/outs, room states, payments)
+// scope 'management': everything, including staff management actions
+export async function fetchLogs(dateStr: string, scope: 'reception' | 'management' = 'reception'): Promise<LogEvent[]> {
   const { data, error } = await supabase
     .from('activity_log')
     .select('id, action, at')
@@ -199,6 +201,7 @@ export async function fetchLogs(dateStr: string): Promise<LogEvent[]> {
 
   return (data ?? [])
     .filter((l) => new Date(l.at).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' }) === dateStr)
+    .filter((l) => scope === 'management' || !l.action.startsWith('staff '))
     .map((l) => {
       const action = l.action.toLowerCase();
       const tone: LogEvent['tone'] =
