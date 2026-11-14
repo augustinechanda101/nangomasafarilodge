@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabase';
+import LoadingScreen from '../components/LoadingScreen';
 
 export interface Profile {
   id: string;
@@ -67,7 +68,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loading && !session) navigate('/login', { replace: true });
   }, [loading, session, navigate]);
-  if (loading) return <div className="min-h-screen bg-sand" />;
+  if (loading) return <LoadingScreen />;
   if (!session) return null;
   return <>{children}</>;
 }

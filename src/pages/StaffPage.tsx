@@ -8,6 +8,7 @@ import MonthlyGrid from '../components/MonthlyGrid';
 import VacancyView from '../components/VacancyView';
 import ActivitySummary from '../components/ActivitySummary';
 import CompactDayGrid from '../components/CompactDayGrid';
+import LoadingScreen from '../components/LoadingScreen';
 import StaffHeader from '../components/StaffHeader';
 
 type ViewMode = 'overview' | 'today' | 'monthly' | 'day';
@@ -42,6 +43,7 @@ export default function StaffPage() {
   const [showVacancy, setShowVacancy] = useState(false);
 
   const [locations, setLocations] = useState<LocationWithRooms[]>([]);
+  const [locLoading, setLocLoading] = useState(true);
 
   useEffect(() => {
     fetchLocationsWithRooms()
@@ -49,7 +51,8 @@ export default function StaffPage() {
       .catch((e) => {
         console.error('locations fetch failed', e);
         setLocations(LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })));
-      });
+      })
+      .finally(() => setLocLoading(false));
   }, []);
 
   const rooms = useMemo(
@@ -122,6 +125,8 @@ export default function StaffPage() {
       return next;
     });
   };
+
+  if (locLoading) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen bg-sand font-sans text-bark">

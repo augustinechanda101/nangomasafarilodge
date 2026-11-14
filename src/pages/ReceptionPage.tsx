@@ -11,6 +11,7 @@ import VacancyView from '../components/VacancyView';
 import FinanceCard from '../components/FinanceCard';
 import ActivitySummary from '../components/ActivitySummary';
 import CompactDayGrid from '../components/CompactDayGrid';
+import LoadingScreen from '../components/LoadingScreen';
 import StaffHeader from '../components/StaffHeader';
 
 type ViewMode = 'overview' | 'today' | 'monthly' | 'day';
@@ -46,6 +47,7 @@ export default function ReceptionPage() {
 
   // Start empty (no sample flash); sample data only as fallback on fetch failure
   const [locations, setLocations] = useState<LocationWithRooms[]>([]);
+  const [locLoading, setLocLoading] = useState(true);
 
   useEffect(() => {
     fetchLocationsWithRooms()
@@ -53,7 +55,8 @@ export default function ReceptionPage() {
       .catch((e) => {
         console.error('locations fetch failed', e);
         setLocations(LOCATIONS.filter((l) => l.id !== 'all').map((l) => ({ id: 0, name: l.name, rooms: l.rooms })));
-      });
+      })
+      .finally(() => setLocLoading(false));
   }, []);
 
   const rooms = useMemo(
@@ -171,6 +174,8 @@ export default function ReceptionPage() {
     }
     loadAlerts();
   };
+
+  if (locLoading) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen bg-sand font-sans text-bark">

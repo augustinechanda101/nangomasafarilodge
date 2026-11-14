@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FinanceCard from '../components/FinanceCard';
 import RecordsView from '../components/RecordsView';
+import LoadingScreen from '../components/LoadingScreen';
 import { fetchRecords } from '../lib/data';
 import type { BookingRecord } from '../lib/staffTypes';
 import StaffHeader from '../components/StaffHeader';
@@ -24,6 +25,7 @@ const PERIODS: { id: Period; label: string }[] = [
 
 export default function FinancePage() {
   const [records, setRecords] = useState<BookingRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [daysOpen, setDaysOpen] = useState(false);
   const [period, setPeriod] = useState<Period>('today');
   const [customFrom, setCustomFrom] = useState(localISO(new Date(Date.now() - 6 * 86_400_000)));
@@ -32,8 +34,11 @@ export default function FinancePage() {
   useEffect(() => {
     fetchRecords()
       .then(setRecords)
-      .catch((e) => console.error('records fetch failed', e));
+      .catch((e) => console.error('records fetch failed', e))
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) return <LoadingScreen />;
 
   const now = new Date();
   const today = localISO(now);
