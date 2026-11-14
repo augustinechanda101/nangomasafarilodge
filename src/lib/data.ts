@@ -294,15 +294,17 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
           text: `${b.guest_name} · ${roomNumber} · checkout was ${dayLabel(b.checkout_at)}`,
           action: 'Check out',
           location: locName,
+          status: 'in house',
         });
       } else if (b.status === 'booked' && b.expected_arrival <= now) {
         alerts.push({
           id: 20000 + b.id,
           tag: 'Awaiting check-in',
           tone: 'warn',
-          text: `${b.guest_name} · ${roomNumber} · booked · awaiting arrival`,
+          text: `${b.guest_name} · ${roomNumber} · awaiting arrival`,
           action: 'Check in',
           location: locName,
+          status: 'booked',
         });
       }
     }
@@ -318,9 +320,10 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
       id: 30000 + r.id,
       tag: 'Room on hold',
       tone: 'warn',
-      text: `${r.number} · held · awaiting payment`,
+      text: `${r.number} · awaiting payment`,
       action: 'Mark Available',
       location: (r.locations as unknown as { name: string } | null)?.name ?? undefined,
+      status: 'held',
     });
   }
 

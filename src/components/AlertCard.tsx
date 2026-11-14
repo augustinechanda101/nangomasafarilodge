@@ -20,9 +20,14 @@ export default function AlertCard({ item, onAction }: Props) {
     <div className="flex flex-1 flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card px-3.5 py-3">
       <div className="flex items-center justify-between gap-2">
         <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${chip}`}>{item.tag}</span>
-        {item.location && (
-          <span className="text-[11px] text-bark-muted">{item.location}</span>
-        )}
+        <span className="flex items-center gap-2">
+          {item.status && (
+            <span className="rounded-full bg-bark-soft px-2.5 py-1 text-xs font-semibold text-bark">{item.status}</span>
+          )}
+          {item.location && (
+            <span className="text-[11px] text-bark-muted">{item.location}</span>
+          )}
+        </span>
       </div>
       <p className="text-sm">{item.text}</p>
       <button

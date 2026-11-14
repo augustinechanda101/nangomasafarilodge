@@ -7,7 +7,7 @@ export interface GridBar {
   room: number; start: number; end: number; kind: BarKind; label: string;
   invoice?: string; amount?: number; method?: string; bookingId?: number;
 }
-export interface AlertItem { id: number; tag: string; tone: 'bad' | 'warn'; text: string; action: string; location?: string }
+export interface AlertItem { id: number; tag: string; tone: 'bad' | 'warn'; text: string; action: string; location?: string; status?: string }
 
 export interface BookingDraft {
   location: string;
