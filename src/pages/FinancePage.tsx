@@ -128,6 +128,7 @@ export default function FinancePage() {
               <input
                 type="date"
                 value={customFrom}
+                max={today}
                 onChange={(e) => setCustomFrom(e.target.value)}
                 className="min-h-9 rounded-lg border border-bark-field bg-sand-card px-2 text-sm"
                 aria-label="From date"
@@ -136,6 +137,7 @@ export default function FinancePage() {
               <input
                 type="date"
                 value={customTo}
+                max={today}
                 onChange={(e) => setCustomTo(e.target.value)}
                 className="min-h-9 rounded-lg border border-bark-field bg-sand-card px-2 text-sm"
                 aria-label="To date"

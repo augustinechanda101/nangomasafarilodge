@@ -1,5 +1,11 @@
 import type { LogEvent } from '../lib/staffTypes';
 
+function localISO(d: Date): string {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 const FIELD =
   'min-h-10 rounded-xl border border-bark-field bg-sand-card px-3 text-sm text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre';
 
@@ -24,6 +30,7 @@ export default function LogsView({ date, onDateChange, logs }: Props) {
         <input
           type="date"
           value={date}
+          max={localISO(new Date())}
           onChange={(e) => onDateChange(e.target.value)}
           className={FIELD}
         />
