@@ -8,7 +8,7 @@ import RoomGrid from '../components/RoomGrid';
 import RoomDetailView from '../components/RoomDetailView';
 import MonthlyGrid from '../components/MonthlyGrid';
 import FinanceCard from '../components/FinanceCard';
-import ActivitySummary from '../components/ActivitySummary';
+import ActivityPanel from '../components/ActivityPanel';
 import CompactDayGrid from '../components/CompactDayGrid';
 import Legend from '../components/Legend';
 import LoadingScreen from '../components/LoadingScreen';
@@ -435,7 +435,6 @@ export default function ReceptionPage() {
                 zoomLevel={zoomLevel}
                 canAct
                 onAction={handleAction}
-                summary={false}
               />
             ) : (
               /* One-day view, single location: info above the panel, compact 2-by-2 grid */
@@ -479,19 +478,7 @@ export default function ReceptionPage() {
 
             {viewMode !== 'monthly' && (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <ActivitySummary
-                  bars={bars}
-                  rooms={rooms}
-                  dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
-                  numColumns={viewMode === 'overview' ? numColumns : 1}
-                  title={
-                    viewMode === 'overview'
-                      ? `Activities — next ${numColumns} days`
-                      : viewMode === 'day' && activeDate
-                      ? `Activities — ${fmtDay(activeDate)}`
-                      : "Activities — today"
-                  }
-                />
+                <ActivityPanel />
                 <FinanceCard
                   items={bars}
                   title={

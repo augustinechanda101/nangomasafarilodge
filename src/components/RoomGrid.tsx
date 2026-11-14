@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { BarKind, GridBar, GridRoom } from '../lib/staffTypes';
 import BookingDetailModal from './BookingDetailModal';
-import ActivitySummary from './ActivitySummary';
 import Legend from './Legend';
 
 const BAR: Record<BarKind, string> = {
@@ -12,11 +11,11 @@ const BAR: Record<BarKind, string> = {
   inspect: 'bg-brick-chip text-brick-ink',
 };
 
-interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDayClick?: (dayIndex: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean; onAction?: (verb: string, bar: GridBar) => void; summary?: boolean; fill?: boolean }
+interface Props { days: string[]; rooms: GridRoom[]; bars: GridBar[]; onRoomClick?: (roomNumber: number) => void; onDayClick?: (dayIndex: number) => void; onDateChange?: (date: string) => void; zoomLevel?: number; canAct?: boolean; onAction?: (verb: string, bar: GridBar) => void; fill?: boolean }
 
 type Row = { kind: 'header'; label: string } | { kind: 'room'; room: GridRoom; roomIndex: number };
 
-export default function RoomGrid({ days, rooms, bars, onRoomClick, onDayClick, zoomLevel = 1, canAct, onAction, summary = true, fill = false }: Props) {
+export default function RoomGrid({ days, rooms, bars, onRoomClick, onDayClick, zoomLevel = 1, canAct, onAction, fill = false }: Props) {
   const [activeBar, setActiveBar] = useState<GridBar | null>(null);
 
   // Zoom levels: 1 = 7 days, 2 = 4 days, 3 = 2 days
@@ -177,16 +176,6 @@ export default function RoomGrid({ days, rooms, bars, onRoomClick, onDayClick, z
           })}
         </div>
       </div>
-
-      {summary && (
-        <ActivitySummary
-          bars={bars}
-          rooms={rooms}
-          dayLabels={columnLabels}
-          numColumns={numColumns}
-          title={`Activities — next ${numColumns} days`}
-        />
-      )}
 
       <Legend />
 

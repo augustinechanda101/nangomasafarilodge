@@ -5,7 +5,7 @@ import type { GridBar, GridRoom } from '../lib/staffTypes';
 import RoomGrid from '../components/RoomGrid';
 import RoomDetailView from '../components/RoomDetailView';
 import MonthlyGrid from '../components/MonthlyGrid';
-import ActivitySummary from '../components/ActivitySummary';
+import ActivityPanel from '../components/ActivityPanel';
 import CompactDayGrid from '../components/CompactDayGrid';
 import Legend from '../components/Legend';
 import LoadingScreen from '../components/LoadingScreen';
@@ -329,7 +329,6 @@ export default function StaffPage() {
                 }}
                 onDayClick={(dayIndex) => openDate(localISO(new Date(Date.now() + dayIndex * 86_400_000)))}
                 zoomLevel={zoomLevel}
-                summary={false}
               />
             ) : (
               /* One-day view, single location: info above the panel, compact 2-by-2 grid */
@@ -369,21 +368,7 @@ export default function StaffPage() {
 
             {(viewMode === 'today' || viewMode === 'day') && <Legend />}
 
-            {viewMode !== 'monthly' && (
-              <ActivitySummary
-                bars={bars}
-                rooms={rooms}
-                dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
-                numColumns={viewMode === 'overview' ? numColumns : 1}
-                title={
-                  viewMode === 'overview'
-                    ? `Activities — next ${numColumns} days`
-                    : viewMode === 'day' && activeDate
-                    ? `Activities — ${fmtDay(activeDate)}`
-                    : 'Activities — today'
-                }
-              />
-            )}
+            {viewMode !== 'monthly' && <ActivityPanel />}
           </section>
         </div>
       </div>
