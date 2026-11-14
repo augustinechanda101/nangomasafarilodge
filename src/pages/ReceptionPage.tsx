@@ -139,6 +139,7 @@ export default function ReceptionPage() {
   };
 
   const openDate = (dateStr: string) => {
+    setShowVacancy(false);
     setOpenDates((p) => (p.includes(dateStr) ? p : [...p, dateStr]));
     setActiveDate(dateStr);
     setViewMode('day');
@@ -218,7 +219,10 @@ export default function ReceptionPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setViewMode('today')}
+            onClick={() => {
+              setShowVacancy(false);
+              setViewMode('today');
+            }}
             className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${
               viewMode === 'today'
                 ? 'bg-bark-deep text-sand-card'
@@ -252,7 +256,7 @@ export default function ReceptionPage() {
           >
             Monthly View
           </button>
-          {viewMode !== 'monthly' && (
+          {viewMode === 'overview' && (
             <div className="flex rounded-xl bg-bark-soft p-0.5 ml-1">
               <button
                 type="button"
