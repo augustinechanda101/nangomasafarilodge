@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { AlertItem, BookingDraft, BookingRecord, GridBar, GridRoom } from './staffTypes';
+import type { AlertItem, BookingDraft, BookingRecord, GridBar, GridRoom, LogEvent } from './staffTypes';
 
 export interface LocationWithRooms {
   id: number;
@@ -171,6 +171,33 @@ export async function fetchRecords(): Promise<BookingRecord[]> {
   }
   return records;
 }
+
+// Real event log from the activity_log table, filtered to the selected Lusaka date
+export async function fetchLogs(dateStr: string): Promise<LogEvent[]> {
+  const { data, error } = await supabase
+    .from('activity_log')
+    .select('id, action, at')
+    .order('at', { ascending: false });
+  if (error) throw error;
+
+  return (data ?? [])
+    .filter((l) => new Date(l.at).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' }) === dateStr)
+    .map((l) => {
+      const action = l.action.toLowerCase();
+      const tone: LogEvent['tone'] =
+        action.startsWith('checkin') ? 'in'
+        : action.startsWith('checkout') ? 'out'
+        : action.includes('payment') ? 'money'
+        : 'info';
+      return {
+        time: new Date(l.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' }),
+        text: l.action,
+        tone,
+      };
+    })
+    .reverse(); // chronological order
+}
+
 export async function bookingAction(verb: string, bookingId: number, label: string): Promise<string | null> {
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = {};

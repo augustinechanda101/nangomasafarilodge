@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import LogsView from '../components/LogsView';
-import { logsForDate } from '../lib/sampleStaff';
+import { fetchLogs } from '../lib/data';
+import type { LogEvent } from '../lib/staffTypes';
 import StaffHeader from '../components/StaffHeader';
 
 function localISO(d: Date): string {
@@ -12,6 +13,16 @@ function localISO(d: Date): string {
 
 export default function LogsPage() {
   const [date, setDate] = useState(localISO(new Date()));
+  const [logs, setLogs] = useState<LogEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchLogs(date)
+      .then(setLogs)
+      .catch((e) => console.error('logs fetch failed', e))
+      .finally(() => setLoading(false));
+  }, [date]);
 
   return (
     <div className="min-h-screen bg-sand font-sans text-bark">
@@ -22,7 +33,7 @@ export default function LogsPage() {
         <StaffHeader role="Reception — Logs" who="[Receptionist name]" />
 
         <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
-          <LogsView date={date} onDateChange={setDate} logs={logsForDate(date)} />
+          <LogsView date={date} onDateChange={setDate} logs={logs} loading={loading} />
         </section>
       </div>
     </div>

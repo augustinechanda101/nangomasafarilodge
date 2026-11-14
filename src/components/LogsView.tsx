@@ -20,9 +20,10 @@ interface Props {
   date: string;
   onDateChange: (date: string) => void;
   logs: LogEvent[];
+  loading?: boolean;
 }
 
-export default function LogsView({ date, onDateChange, logs }: Props) {
+export default function LogsView({ date, onDateChange, logs, loading }: Props) {
   return (
     <div className="flex flex-col gap-3">
       <label className="flex items-center gap-2 text-sm text-bark-muted">
@@ -37,7 +38,11 @@ export default function LogsView({ date, onDateChange, logs }: Props) {
       </label>
       <div className="max-h-[28rem] overflow-y-auto">
         <div className="flex flex-col gap-2">
-          {logs.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <span className="h-7 w-7 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
+            </div>
+          ) : logs.length === 0 ? (
             <p className="text-sm text-bark-muted">No activity logged on this date</p>
           ) : (
             logs.map((e, i) => (
