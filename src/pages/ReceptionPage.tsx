@@ -360,34 +360,25 @@ export default function ReceptionPage() {
               />
             ) : splitByLocation ? (
               /* One-day views on All Locations: each location side by side */
-              <>
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                  {locationGroups.map((g) => (
-                    <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3 xl:h-80">
-                      <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
-                      <div className="min-h-0 flex-1 overflow-y-auto">
-                        <CompactDayGrid
-                          rooms={g.rooms}
-                          bars={g.bars}
-                          canAct
-                          onAction={handleAction}
-                          onRoomClick={(roomNumber) => {
-                            const room = g.rooms[roomNumber - 1];
-                            setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
-                          }}
-                        />
-                      </div>
-                    </section>
-                  ))}
-                </div>
-                <ActivitySummary
-                  bars={bars}
-                  rooms={rooms}
-                  dayLabels={[dayLabels[0]]}
-                  numColumns={1}
-                  title={`Activities — ${viewMode === 'day' && activeDate ? fmtDay(activeDate) : 'today'}`}
-                />
-              </>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {locationGroups.map((g) => (
+                  <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3 xl:h-80">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
+                    <div className="min-h-0 flex-1 overflow-y-auto">
+                      <CompactDayGrid
+                        rooms={g.rooms}
+                        bars={g.bars}
+                        canAct
+                        onAction={handleAction}
+                        onRoomClick={(roomNumber) => {
+                          const room = g.rooms[roomNumber - 1];
+                          setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
+                        }}
+                      />
+                    </div>
+                  </section>
+                ))}
+              </div>
             ) : (
               <RoomGrid
                 days={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
@@ -404,16 +395,31 @@ export default function ReceptionPage() {
             )}
 
             {viewMode !== 'monthly' && (
-              <FinanceCard
-                items={bars}
-                title={
-                  viewMode === 'overview'
-                    ? `Financials — next ${numColumns} days`
-                    : viewMode === 'day' && activeDate
-                    ? `Financials — ${fmtDay(activeDate)}`
-                    : 'Financials — today'
-                }
-              />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <ActivitySummary
+                  bars={bars}
+                  rooms={rooms}
+                  dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
+                  numColumns={viewMode === 'overview' ? numColumns : 1}
+                  title={
+                    viewMode === 'overview'
+                      ? `Activities — next ${numColumns} days`
+                      : viewMode === 'day' && activeDate
+                      ? `Activities — ${fmtDay(activeDate)}`
+                      : "Activities — today"
+                  }
+                />
+                <FinanceCard
+                  items={bars}
+                  title={
+                    viewMode === 'overview'
+                      ? `Financials — next ${numColumns} days`
+                      : viewMode === 'day' && activeDate
+                      ? `Financials — ${fmtDay(activeDate)}`
+                      : 'Financials — today'
+                  }
+                />
+              </div>
             )}
           </section>
         </div>
