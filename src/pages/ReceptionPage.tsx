@@ -36,14 +36,26 @@ function nextDayLabels(n: number): string[] {
 
 export default function ReceptionPage() {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<ViewMode>('overview');
+  // Desk state persists across navigation (e.g. to the booking page and back)
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () => (sessionStorage.getItem('recep.viewMode') as ViewMode) ?? 'overview',
+  );
   const [selectedRoom, setSelectedRoom] = useState<{
     name: string; number: number; room?: GridRoom; bars: GridBar[]; dayLabels: string[];
   } | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(1); // 1 = 7 days, 2 = 4 days, 3 = 2 days
-  const [openDates, setOpenDates] = useState<string[]>([]);
-  const [activeDate, setActiveDate] = useState<string | null>(null);
-  const [location, setLocation] = useState<string>('all');
+  const [zoomLevel, setZoomLevel] = useState(() => Number(sessionStorage.getItem('recep.zoom')) || 1);
+  const [openDates, setOpenDates] = useState<string[]>(() => {
+    try { return JSON.parse(sessionStorage.getItem('recep.openDates') ?? '[]'); } catch { return []; }
+  });
+  const [activeDate, setActiveDate] = useState<string | null>(() => sessionStorage.getItem('recep.activeDate') || null);
+  const [location, setLocation] = useState<string>(() => sessionStorage.getItem('recep.location') ?? 'all');
+
+  // Persist desk state so navigation (booking page and back) restores everything
+  useEffect(() => { sessionStorage.setItem('recep.viewMode', viewMode); }, [viewMode]);
+  useEffect(() => { sessionStorage.setItem('recep.zoom', String(zoomLevel)); }, [zoomLevel]);
+  useEffect(() => { sessionStorage.setItem('recep.openDates', JSON.stringify(openDates)); }, [openDates]);
+  useEffect(() => { sessionStorage.setItem('recep.activeDate', activeDate ?? ''); }, [activeDate]);
+  useEffect(() => { sessionStorage.setItem('recep.location', location); }, [location]);
 
   // Start empty (no sample flash); sample data only as fallback on fetch failure
   const [locations, setLocations] = useState<LocationWithRooms[]>([]);

@@ -32,14 +32,26 @@ function nextDayLabels(n: number): string[] {
 
 // View-only page for general staff (bartenders, etc.) — no booking, no desk actions.
 export default function StaffPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('overview');
+  // Desk state persists across navigation
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () => (sessionStorage.getItem('staff.viewMode') as ViewMode) ?? 'overview',
+  );
   const [selectedRoom, setSelectedRoom] = useState<{
     name: string; number: number; room?: GridRoom; bars: GridBar[]; dayLabels: string[];
   } | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(1); // 1 = 7 days, 2 = 4 days, 3 = 2 days
-  const [openDates, setOpenDates] = useState<string[]>([]);
-  const [activeDate, setActiveDate] = useState<string | null>(null);
-  const [location, setLocation] = useState<string>('all');
+  const [zoomLevel, setZoomLevel] = useState(() => Number(sessionStorage.getItem('staff.zoom')) || 1);
+  const [openDates, setOpenDates] = useState<string[]>(() => {
+    try { return JSON.parse(sessionStorage.getItem('staff.openDates') ?? '[]'); } catch { return []; }
+  });
+  const [activeDate, setActiveDate] = useState<string | null>(() => sessionStorage.getItem('staff.activeDate') || null);
+  const [location, setLocation] = useState<string>(() => sessionStorage.getItem('staff.location') ?? 'all');
+
+  // Persist desk state so navigation restores everything
+  useEffect(() => { sessionStorage.setItem('staff.viewMode', viewMode); }, [viewMode]);
+  useEffect(() => { sessionStorage.setItem('staff.zoom', String(zoomLevel)); }, [zoomLevel]);
+  useEffect(() => { sessionStorage.setItem('staff.openDates', JSON.stringify(openDates)); }, [openDates]);
+  useEffect(() => { sessionStorage.setItem('staff.activeDate', activeDate ?? ''); }, [activeDate]);
+  useEffect(() => { sessionStorage.setItem('staff.location', location); }, [location]);
 
   const [locations, setLocations] = useState<LocationWithRooms[]>([]);
   const [locLoading, setLocLoading] = useState(true);
