@@ -13,6 +13,12 @@ const FIELD =
   'min-h-10 w-full rounded-xl border border-bark-field bg-sand-card px-2.5 text-sm text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre';
 const LABEL = 'flex flex-col gap-1 text-[13px] text-bark-muted';
 
+function localISO(d: Date): string {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 // Checkout is always 10:00 AM on the last morning, whatever time the guest arrives.
 function checkoutOf(arrival: string, nights: number): string {
   if (!arrival || nights < 1) return '';
@@ -153,7 +159,26 @@ export default function NewBookingForm({ locations, initialLocation, initialRoom
       <label className={LABEL}>Nights
         <input className={FIELD} type="number" min={1} value={d.nights} onChange={(e) => set('nights', Number(e.target.value))} />
       </label>
-      <label className={LABEL}>Arrival date
+      <label className={LABEL}>
+        <span className="flex items-center justify-between">
+          Arrival date
+          <span className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => set('arrival', localISO(new Date()))}
+              className="rounded-full bg-bark-soft px-2 py-0.5 text-[10px] font-semibold text-bark hover:bg-bark-off"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => set('arrival', localISO(new Date(Date.now() + 86_400_000)))}
+              className="rounded-full bg-bark-soft px-2 py-0.5 text-[10px] font-semibold text-bark hover:bg-bark-off"
+            >
+              Tomorrow
+            </button>
+          </span>
+        </span>
         <input className={FIELD} type="date" value={d.arrival} onChange={(e) => set('arrival', e.target.value)} />
       </label>
 
