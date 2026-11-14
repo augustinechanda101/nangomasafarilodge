@@ -36,7 +36,12 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-sand font-sans text-bark px-4">
       <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-sand-line bg-sand-card p-8">
-        <img src="/nangomalogo.webp" alt="Nangoma Safari Lodge" className="h-16 w-auto rounded-xl" />
+        <img
+          src="/nangomalogo.webp"
+          alt="Nangoma Safari Lodge"
+          className="h-16 w-auto rounded-xl"
+          style={{ transform: 'translateX(10px)' }}
+        />
         <h1 className="font-sans text-xl font-semibold">Staff Login</h1>
         <form className="flex w-full flex-col gap-3" onSubmit={submit}>
           <label className={LABEL}>Email

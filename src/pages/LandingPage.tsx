@@ -2,8 +2,15 @@ import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-sand font-sans text-bark">
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-5 px-4 py-4 md:px-14 md:py-7 2xl:gap-6 2xl:px-12 2xl:py-10">
+    <div className="relative min-h-screen font-sans text-bark">
+      {/* Lodge photo background with a soft sand scrim */}
+      <div
+        className="fixed inset-0 bg-cover bg-center"
+        style={{ backgroundImage: 'url(/landing-bg.webp)' }}
+      />
+      <div className="fixed inset-0 bg-sand/70" />
+
+      <div className="relative mx-auto flex max-w-[1600px] flex-col gap-5 px-4 py-4 md:px-14 md:py-7 2xl:gap-6 2xl:px-12 2xl:py-10">
         <div className="flex flex-col items-center gap-3">
           <img
             src="/nangomalogo.webp"
