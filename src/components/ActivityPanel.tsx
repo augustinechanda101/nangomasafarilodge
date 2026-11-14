@@ -23,6 +23,7 @@ export default function ActivityPanel() {
   const [customTo, setCustomTo] = useState(localISO(new Date()));
   const [entries, setEntries] = useState<ActivityEntry[] | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [sortLatest, setSortLatest] = useState(true);
 
   const today = localISO(new Date());
   const weekStart = localISO(new Date(Date.now() - 6 * 86_400_000));
@@ -100,17 +101,42 @@ export default function ActivityPanel() {
     </div>
   );
 
+  const sorted = entries === null ? null : sortLatest ? [...entries].reverse() : entries;
+
+  const sortControls = (
+    <div className="flex w-fit items-center gap-2 rounded-xl bg-bark-soft p-0.5">
+      <button
+        type="button"
+        onClick={() => setSortLatest(true)}
+        className={`min-h-9 rounded-lg px-3 text-sm font-semibold transition-colors ${
+          sortLatest ? 'bg-sand-card text-bark shadow-sm' : 'text-bark-muted hover:text-bark'
+        }`}
+      >
+        Latest first
+      </button>
+      <button
+        type="button"
+        onClick={() => setSortLatest(false)}
+        className={`min-h-9 rounded-lg px-3 text-sm font-semibold transition-colors ${
+          !sortLatest ? 'bg-sand-card text-bark shadow-sm' : 'text-bark-muted hover:text-bark'
+        }`}
+      >
+        Earliest first
+      </button>
+    </div>
+  );
+
   const list = (tall: boolean) => (
     <div className={`overflow-y-auto overscroll-contain ${tall ? 'mt-4 flex-1' : 'mt-3 max-h-[28rem]'}`}>
-      {entries === null ? (
+      {sorted === null ? (
         <div className="flex justify-center py-8">
           <span className="h-7 w-7 animate-spin rounded-full border-2 border-ochre border-t-transparent" />
         </div>
-      ) : entries.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <p className="py-3 text-sm text-bark-muted">No activity in this period</p>
       ) : (
         <div className="flex flex-col">
-          {entries.map((e) => {
+          {sorted.map((e) => {
             const m = e.text.match(/ — by (.+)$/);
             const text = m ? e.text.replace(/ — by .+$/, '') : e.text;
             const who = e.who ?? m?.[1];
@@ -164,8 +190,9 @@ export default function ActivityPanel() {
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-display text-xl font-semibold">Activity — {periodLabel}</h3>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {periodControls}
+                {sortControls}
                 <button
                   type="button"
                   onClick={() => setExpanded(false)}
