@@ -259,6 +259,28 @@ export async function setRoomState(roomId: number, housekeeping: string, roomLab
   return null;
 }
 
+// Hold room(s) for 3 hours: room state 'hold' + a holds row with expiry + log.
+// A hold is NOT a booking — the room reads "held" everywhere.
+export async function holdRooms(roomIds: number[], note: string, roomLabel: string): Promise<string | null> {
+  const now = new Date().toISOString();
+  const expires = new Date(Date.now() + 3 * 3_600_000).toISOString();
+  for (const id of roomIds) {
+    const err = await setRoomState(id, 'hold', roomLabel);
+    if (err) return err;
+    const { error } = await supabase.from('holds').insert({
+      room_id: id,
+      starts_at: now,
+      ends_at: expires,
+      expires_at: expires,
+      note: note || null,
+      set_by: currentUser?.id,
+      released: false,
+    });
+    if (error) return error.message;
+  }
+  return null;
+}
+
 // Live alerts derived from real data:
 //  - overdue checkout: checked-in booking past its checkout time
 //  - awaiting check-in: booked guest whose arrival time has passed

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import NewBookingForm from '../components/NewBookingForm';
-import { bookingAction, createBooking, fetchLocationsWithRooms, type LocationWithRooms } from '../lib/data';
+import { bookingAction, createBooking, fetchLocationsWithRooms, holdRooms, type LocationWithRooms } from '../lib/data';
 import { LOCATIONS } from '../lib/sampleStaff';
 
 export default function BookingPage() {
@@ -74,6 +74,34 @@ export default function BookingPage() {
     setSaved(`${result.invoice} — guest checked in`);
   };
 
+  // Hold: room state 'hold' + a 3-hour holds row — NOT a booking
+  const hold = async (draft: Parameters<typeof createBooking>[1]) => {
+    setBusy(true);
+    setSaveError(null);
+    setSaved(null);
+    const loc = locations.find((l) => l.name === draft.location);
+    if (!loc || !loc.id) {
+      setSaveError('Location not loaded yet — try again in a moment');
+      setBusy(false);
+      return;
+    }
+    const ids = loc.rooms
+      .filter((r) => draft.rooms.includes(r.name) && r.id !== undefined)
+      .map((r) => r.id as number);
+    if (ids.length === 0) {
+      setSaveError('Select at least one room to hold');
+      setBusy(false);
+      return;
+    }
+    const err = await holdRooms(ids, draft.guestName, `${draft.rooms.join(', ')} · ${loc.name}`);
+    setBusy(false);
+    if (err) {
+      setSaveError(err);
+      return;
+    }
+    setSaved(`Room${draft.rooms.length > 1 ? 's' : ''} held for 3 hours`);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-sand font-sans text-bark px-4 py-6">
       <div className="flex w-full max-w-2xl flex-col gap-4">
@@ -96,7 +124,7 @@ export default function BookingPage() {
           initialRoom={initialRoom}
           initialDate={initialDate}
           onSave={save}
-          onHold={save}
+          onHold={hold}
           onSaveAndCheckIn={saveAndCheckIn}
           busy={busy}
         />
