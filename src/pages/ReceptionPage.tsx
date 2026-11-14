@@ -363,18 +363,20 @@ export default function ReceptionPage() {
               <>
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                   {locationGroups.map((g) => (
-                    <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3">
+                    <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3 xl:h-80">
                       <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
-                      <CompactDayGrid
-                        rooms={g.rooms}
-                        bars={g.bars}
-                        canAct
-                        onAction={handleAction}
-                        onRoomClick={(roomNumber) => {
-                          const room = g.rooms[roomNumber - 1];
-                          setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
-                        }}
-                      />
+                      <div className="min-h-0 flex-1 overflow-y-auto">
+                        <CompactDayGrid
+                          rooms={g.rooms}
+                          bars={g.bars}
+                          canAct
+                          onAction={handleAction}
+                          onRoomClick={(roomNumber) => {
+                            const room = g.rooms[roomNumber - 1];
+                            setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
+                          }}
+                        />
+                      </div>
                     </section>
                   ))}
                 </div>
