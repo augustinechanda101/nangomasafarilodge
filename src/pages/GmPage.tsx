@@ -7,6 +7,7 @@ import KpiCard from '../components/KpiCard';
 import LoadingScreen from '../components/LoadingScreen';
 import RevenueChart from '../components/RevenueChart';
 import StaffHeader from '../components/StaffHeader';
+import StaffManager from '../components/StaffManager';
 import StaffTotals from '../components/StaffTotals';
 
 const TABS = [
@@ -72,9 +73,14 @@ export default function GmPage() {
           </>
         )}
 
-        {tab === 'activity' && <ActivityFeed items={data.feed} />}
+        {tab === 'activity' && (
+          <div className="flex flex-col gap-4">
+            <ActivityFeed items={data.feed} />
+            <StaffTotals rows={data.staffTotals} />
+          </div>
+        )}
 
-        {tab === 'staff' && <StaffTotals rows={data.staffTotals} />}
+        {tab === 'staff' && <StaffManager />}
       </div>
     </div>
   );

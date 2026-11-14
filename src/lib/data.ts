@@ -317,11 +317,50 @@ const lusakaDate = (iso: string) =>
 
 export interface GmFeedItem { id: number; text: string; when: string }
 export interface StaffActions { name: string; actions: number }
+export interface StaffMember {
+  id: string;
+  name: string;
+  email: string;
+  role: 'staff' | 'reception' | 'gm';
+  status: string;
+  department: string;
+}
 export interface GmData {
   kpis: Kpi[];
   revenue: RevenuePoint[];
   staffTotals: StaffActions[];
   feed: GmFeedItem[];
+}
+
+// Employee list for the GM's Staff tab (needs the "authenticated read users" policy)
+export async function fetchStaffList(): Promise<StaffMember[]> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, email, role, status, department')
+    .order('department')
+    .order('name');
+  if (error) throw error;
+  return (data ?? []) as StaffMember[];
+}
+
+// Add a staff member: creates the login + profile (GM only, via create_staff)
+export async function addStaff(input: {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  department: string;
+}): Promise<string | null> {
+  const { data, error } = await supabase.rpc('create_staff', {
+    p_name: input.name,
+    p_email: input.email,
+    p_password: input.password,
+    p_role: input.role,
+    p_department: input.department,
+  });
+  if (error) return error.message;
+  const res = data as { error?: string } | null;
+  return res?.error ?? null;
 }
 
 export async function fetchGmData(): Promise<GmData> {
