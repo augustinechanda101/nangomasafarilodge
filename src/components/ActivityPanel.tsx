@@ -33,14 +33,26 @@ export default function ActivityPanel() {
   const to = period === 'today' ? today : period === 'week' ? today : customValid ? customTo : '';
 
   useEffect(() => {
-    if (!from || !to) {
-      setEntries([]);
-      return;
-    }
+    let cancelled = false;
     setEntries(null);
     fetchActivityRange(from, to, 'reception')
-      .then(setEntries)
-      .catch(() => setEntries([]));
+      .then((e) => { if (!cancelled) setEntries(e); })
+      .catch(() => { if (!cancelled) setEntries([]); });
+    return () => { cancelled = true; };
+  }, [from, to]);
+
+  // Live: refresh silently after any desk action + every 30s (no spinner flash)
+  useEffect(() => {
+    const refresh = () => {
+      if (!from || !to) return;
+      fetchActivityRange(from, to, 'reception').then(setEntries).catch(() => {});
+    };
+    window.addEventListener('nangoma-activity-changed', refresh);
+    const iv = setInterval(refresh, 30_000);
+    return () => {
+      window.removeEventListener('nangoma-activity-changed', refresh);
+      clearInterval(iv);
+    };
   }, [from, to]);
 
   useEffect(() => {

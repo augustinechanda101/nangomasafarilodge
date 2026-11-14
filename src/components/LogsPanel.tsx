@@ -24,6 +24,15 @@ export default function LogsPanel({ scope = 'reception' }: { scope?: 'reception'
       .finally(() => setLoading(false));
   }, [date, scope]);
 
+  // Live: silent refresh after any desk action
+  useEffect(() => {
+    const refresh = () => {
+      fetchLogs(date, scope).then(setLogs).catch(() => {});
+    };
+    window.addEventListener('nangoma-activity-changed', refresh);
+    return () => window.removeEventListener('nangoma-activity-changed', refresh);
+  }, [date, scope]);
+
   return (
     <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
       <LogsView date={date} onDateChange={setDate} logs={logs} loading={loading} />

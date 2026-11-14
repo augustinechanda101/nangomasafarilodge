@@ -43,6 +43,9 @@ export function setCurrentUser(u: { id: string; name: string } | null) {
   currentUser = u;
 }
 
+// Ping live panels (activity/logs) that new entries exist
+const pingActivity = () => window.dispatchEvent(new Event('nangoma-activity-changed'));
+
 // Create a booking via the atomic DB function (booking + stays + payment + log)
 export async function createBooking(
   locationId: number,
@@ -63,6 +66,7 @@ export async function createBooking(
     p_created_by: currentUser?.name ?? null,
   });
   if (error) return { error: error.message };
+  pingActivity();
   return data;
 }
 
@@ -245,6 +249,7 @@ export async function bookingAction(verb: string, bookingId: number, label: stri
     booking_id: bookingId,
     user_id: currentUser?.id,
   });
+  pingActivity();
   return null;
 }
 
@@ -256,6 +261,7 @@ export async function setRoomState(roomId: number, housekeeping: string, roomLab
     action: `room ${housekeeping}: ${roomLabel}${currentUser ? ` — by ${currentUser.name}` : ''}`,
     user_id: currentUser?.id,
   });
+  pingActivity();
   return null;
 }
 
@@ -278,6 +284,7 @@ export async function holdRooms(roomIds: number[], note: string, roomLabel: stri
     });
     if (error) return error.message;
   }
+  pingActivity();
   return null;
 }
 
