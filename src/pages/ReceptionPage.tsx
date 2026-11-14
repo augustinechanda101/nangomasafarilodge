@@ -70,12 +70,13 @@ export default function ReceptionPage() {
 
   const [bars, setBars] = useState<GridBar[]>([]);
 
-  // Available rooms per location for the current window
-  const availableByLocation = locations.map((l) => ({
-    name: l.name,
-    free: l.rooms.filter((r) => !bars.some((b) => rooms[b.room - 1]?.name === r.name)).length,
-    total: l.rooms.length,
-  }));
+  // Availability per location for the current window, incl. family rooms
+  const locationInfo = locations.map((l) => {
+    const free = l.rooms.filter((r) => !bars.some((b) => rooms[b.room - 1]?.name === r.name)).length;
+    const familyRooms = l.rooms.filter((r) => r.type === 'Family Room');
+    const familyFree = familyRooms.filter((r) => !bars.some((b) => rooms[b.room - 1]?.name === r.name)).length;
+    return { name: l.name, free, total: l.rooms.length, familyFree, familyTotal: familyRooms.length };
+  });
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
   // Per-location sub-grids for the compact one-day view (re-indexed bars)
@@ -324,38 +325,31 @@ export default function ReceptionPage() {
 
         <div className="flex flex-col items-start gap-4 lg:flex-row">
           <section className="flex w-full min-w-0 flex-1 flex-col gap-3 rounded-2xl border border-sand-line bg-sand-card p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-display text-xl font-semibold">
-                {showVacancy && viewMode !== 'monthly'
-                  ? 'Vacancy'
-                  : viewMode === 'overview'
-                  ? zoomLevel === 1
+            {(viewMode === 'monthly' || viewMode === 'overview') && (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-display text-xl font-semibold">
+                  {viewMode === 'monthly'
+                    ? 'Monthly View'
+                    : zoomLevel === 1
                     ? 'Rooms, next 7 days'
                     : zoomLevel === 2
                     ? 'Rooms, next 4 days'
-                    : 'Rooms, next 2 days'
-                  : viewMode === 'today'
-                  ? 'Rooms, today'
-                  : viewMode === 'day' && activeDate
-                  ? `Rooms, ${fmtDay(activeDate)}`
-                  : 'Monthly View'}
-              </h3>
-              <span className="text-[13px] font-semibold text-savanna-ink">
-                {viewMode !== 'monthly' &&
-                  availableByLocation.map((a) => `${a.name} ${a.free}/${a.total}`).join(' · ')}
-              </span>
-              <span className="text-[13px] text-bark-muted">
-                {showVacancy && viewMode !== 'monthly'
-                  ? 'Rooms free in this period'
-                  : viewMode === 'overview'
-                  ? zoomLevel > 1
+                    : 'Rooms, next 2 days'}
+                </h3>
+                {viewMode === 'overview' && (
+                  <span className="text-[13px] font-semibold text-savanna-ink">
+                    {locationInfo.map((a) => `${a.name} ${a.free}/${a.total}`).join(' · ')}
+                  </span>
+                )}
+                <span className="text-[13px] text-bark-muted">
+                  {viewMode === 'monthly'
+                    ? 'Click a day to open its schedule'
+                    : zoomLevel > 1
                     ? 'Zoomed view - use slider to adjust'
-                    : 'Check-out is always 10:00 AM'
-                  : viewMode === 'today' || viewMode === 'day'
-                  ? 'Click room name for detailed view'
-                  : 'Click a day to open its schedule'}
-              </span>
-            </div>
+                    : 'Check-out is always 10:00 AM'}
+                </span>
+              </div>
+            )}
             {viewMode === 'monthly' ? (
               <MonthlyGrid
                 rooms={rooms}
@@ -370,39 +364,73 @@ export default function ReceptionPage() {
                 dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
               />
             ) : splitByLocation ? (
-              /* One-day views on All Locations: each location side by side */
+              /* One-day views on All Locations: info above each panel, panels side by side */
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                {locationGroups.map((g) => (
-                  <section key={g.name} className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3 xl:h-80">
-                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
-                    <div className="min-h-0 flex-1 overflow-y-auto">
-                      <CompactDayGrid
-                        rooms={g.rooms}
-                        bars={g.bars}
-                        canAct
-                        onAction={handleAction}
-                        onRoomClick={(roomNumber) => {
-                          const room = g.rooms[roomNumber - 1];
-                          setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
-                        }}
-                      />
+                {locationGroups.map((g, gi) => {
+                  const info = locationInfo[gi];
+                  return (
+                    <div key={g.name} className="flex flex-col gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">{g.name}</h4>
+                        <span className="text-[11px] font-semibold text-savanna-ink">{info.free}/{info.total} free</span>
+                        {info.familyTotal > 0 && (
+                          <span className="text-[11px] font-semibold text-ochre-ink">
+                            Family {info.familyFree}/{info.familyTotal}
+                          </span>
+                        )}
+                      </div>
+                      <section className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3 xl:h-80">
+                        <div className="min-h-0 flex-1 overflow-y-auto">
+                          <CompactDayGrid
+                            rooms={g.rooms}
+                            bars={g.bars}
+                            canAct
+                            onAction={handleAction}
+                            onRoomClick={(roomNumber) => {
+                              const room = g.rooms[roomNumber - 1];
+                              setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
+                            }}
+                          />
+                        </div>
+                      </section>
                     </div>
-                  </section>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <RoomGrid
-                days={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
-                rooms={rooms}
-                bars={bars}
-                onRoomClick={(roomNumber) => {
-                  const room = rooms[roomNumber - 1];
-                  setSelectedRoom({ name: room.name, number: roomNumber, bars, dayLabels: viewMode === 'overview' ? dayLabels : [dayLabels[0]] });
-                }}
-                zoomLevel={viewMode === 'overview' ? zoomLevel : 1}
-                canAct
-                onAction={handleAction}
-              />
+              /* One-day view, single location: info above the panel */
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">
+                    {locationInfo.find((x) => x.name === location)?.name ?? location}
+                  </h4>
+                  {(() => {
+                    const info = locationInfo.find((x) => x.name === location);
+                    return info ? (
+                      <>
+                        <span className="text-[11px] font-semibold text-savanna-ink">{info.free}/{info.total} free</span>
+                        {info.familyTotal > 0 && (
+                          <span className="text-[11px] font-semibold text-ochre-ink">
+                            Family {info.familyFree}/{info.familyTotal}
+                          </span>
+                        )}
+                      </>
+                    ) : null;
+                  })()}
+                </div>
+                <RoomGrid
+                  days={[dayLabels[0]]}
+                  rooms={rooms}
+                  bars={bars}
+                  onRoomClick={(roomNumber) => {
+                    const room = rooms[roomNumber - 1];
+                    setSelectedRoom({ name: room.name, number: roomNumber, bars, dayLabels: [dayLabels[0]] });
+                  }}
+                  zoomLevel={1}
+                  canAct
+                  onAction={handleAction}
+                />
+              </div>
             )}
 
             {viewMode !== 'monthly' && (
