@@ -28,13 +28,13 @@ export default function StaffHeader({ role, who, locations, location, onLocation
   };
 
   return (
-    <header className="flex items-start justify-between gap-3">
-      <div className="flex flex-col gap-1.5">
+    <header className="relative flex items-start justify-center gap-3">
+      <div className="flex flex-col items-center gap-1.5">
         <button
           type="button"
           onClick={logout}
           aria-label="Log out"
-          className="self-start cursor-pointer"
+          className="cursor-pointer"
         >
           <img
             src="/nangomalogo.webp"
@@ -47,7 +47,7 @@ export default function StaffHeader({ role, who, locations, location, onLocation
           <span className="text-[13px] font-semibold text-bark-muted">{role}</span>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="absolute right-0 top-0 flex items-center gap-3">
         {action}
         {onLocationChange && location && locations && (
           <label className="mr-2 flex items-center gap-2 text-[13px] text-bark-muted">
