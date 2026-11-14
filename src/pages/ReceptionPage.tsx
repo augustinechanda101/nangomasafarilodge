@@ -414,8 +414,21 @@ export default function ReceptionPage() {
                   );
                 })}
               </div>
+            ) : viewMode === 'overview' ? (
+              <RoomGrid
+                days={dayLabels}
+                rooms={rooms}
+                bars={bars}
+                onRoomClick={(roomNumber) => {
+                  const room = rooms[roomNumber - 1];
+                  setSelectedRoom({ name: room.name, number: roomNumber, room, bars, dayLabels });
+                }}
+                zoomLevel={zoomLevel}
+                canAct
+                onAction={handleAction}
+              />
             ) : (
-              /* One-day view, single location: info above the panel */
+              /* One-day view, single location: info above the panel, compact 2-by-2 grid */
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <h4 className="text-[11px] font-semibold uppercase tracking-wide text-bark-muted">
@@ -435,18 +448,20 @@ export default function ReceptionPage() {
                     ) : null;
                   })()}
                 </div>
-                <RoomGrid
-                  days={[dayLabels[0]]}
-                  rooms={rooms}
-                  bars={bars}
-                  onRoomClick={(roomNumber) => {
-                    const room = rooms[roomNumber - 1];
-                    setSelectedRoom({ name: room.name, number: roomNumber, room, bars, dayLabels: [dayLabels[0]] });
-                  }}
-                  zoomLevel={1}
-                  canAct
-                  onAction={handleAction}
-                />
+                <section className="flex flex-col gap-2 rounded-2xl border border-sand-line bg-sand-card p-3 xl:h-80">
+                  <div className="min-h-0 flex-1 overflow-y-auto">
+                    <CompactDayGrid
+                      rooms={rooms}
+                      bars={bars}
+                      canAct
+                      onAction={handleAction}
+                      onRoomClick={(roomNumber) => {
+                        const room = rooms[roomNumber - 1];
+                        setSelectedRoom({ name: room.name, number: roomNumber, room, bars, dayLabels: [dayLabels[0]] });
+                      }}
+                    />
+                  </div>
+                </section>
               </div>
             )}
 
