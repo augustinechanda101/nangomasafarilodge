@@ -160,9 +160,14 @@ export default function ReceptionPage() {
     });
   };
 
-  // TODO: replace each handler with the Express call (server re-checks every rule)
-  const handleAlert = (id: number) => {
-    console.log('POST /api/alerts/%s/action', id);
+  // Alert actions: room alerts (id >= 30000) release the room; others log for now
+  const handleAlert = async (id: number) => {
+    if (id >= 30000) {
+      const err = await setRoomState(id - 30000, 'ready', 'held room');
+      if (err) console.error('release failed', err);
+      fetchLocationsWithRooms().then(setLocations).catch(() => {});
+      loadBars();
+    }
     loadAlerts();
   };
 

@@ -207,5 +207,20 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
     }
   }
 
+  // Rooms on hold — awaiting payment, follow up
+  const { data: heldRooms } = await supabase
+    .from('rooms')
+    .select('id, number, locations ( name )')
+    .eq('housekeeping', 'hold');
+  for (const r of heldRooms ?? []) {
+    alerts.push({
+      id: 30000 + r.id,
+      tag: 'Room on hold',
+      tone: 'warn',
+      text: `${r.number} · ${(r.locations as unknown as { name: string } | null)?.name ?? ''} · awaiting payment`,
+      action: 'Mark Available',
+    });
+  }
+
   return alerts;
 }
