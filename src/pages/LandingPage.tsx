@@ -24,7 +24,7 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5 2xl:gap-6">
           <Link
-            to="/staff"
+            to="/login?portal=staff"
             className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl bg-bark p-6 transition-transform hover:scale-105 hover:shadow-lg"
           >
             <img src="/staff-icon.svg" alt="" className="h-10 w-10" />
@@ -32,7 +32,7 @@ export default function LandingPage() {
           </Link>
 
           <Link
-            to="/reception"
+            to="/login?portal=reception"
             className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl bg-bark p-6 transition-transform hover:scale-105 hover:shadow-lg"
           >
             <img src="/reception-icon.svg" alt="" className="h-10 w-10" />
@@ -40,7 +40,7 @@ export default function LandingPage() {
           </Link>
 
           <Link
-            to="/gm"
+            to="/login?portal=gm"
             className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl bg-bark p-6 transition-transform hover:scale-105 hover:shadow-lg"
           >
             <img src="/management-icon.svg" alt="" className="h-10 w-10" />

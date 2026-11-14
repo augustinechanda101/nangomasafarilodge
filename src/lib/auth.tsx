@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from './supabase';
 import LoadingScreen from '../components/LoadingScreen';
 
@@ -69,17 +69,20 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
   const { loading, session } = useSession();
   const profile = useProfile();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      navigate('/login', { replace: true });
+      const portal =
+        location.pathname.startsWith('/reception') ? 'reception' : location.pathname.startsWith('/gm') ? 'gm' : 'staff';
+      navigate(`/login?portal=${portal}`, { replace: true });
       return;
     }
     if (roles && profile && !roles.includes(profile.role)) {
       navigate(homeFor(profile.role), { replace: true });
     }
-  }, [loading, session, profile, roles, navigate]);
+  }, [loading, session, profile, roles, navigate, location.pathname]);
 
   if (loading || !session) return <LoadingScreen />;
   if (roles && !profile) return <LoadingScreen />;
