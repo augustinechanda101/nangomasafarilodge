@@ -102,13 +102,14 @@ export default function RecordsView({ records }: { records: BookingRecord[] }) {
               <th className="py-2 pr-3 font-semibold">Nights</th>
               <th className="py-2 pr-3 font-semibold">Amount (K)</th>
               <th className="py-2 pr-3 font-semibold">Method</th>
+              <th className="py-2 pr-3 font-semibold">Invoice</th>
               <th className="py-2 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-6 text-center text-bark-muted">
+                <td colSpan={10} className="py-6 text-center text-bark-muted">
                   {records.length === 0 ? 'No bookings yet' : `No records match “${q}”`}
                 </td>
               </tr>
@@ -123,6 +124,7 @@ export default function RecordsView({ records }: { records: BookingRecord[] }) {
                   <td className="py-2 pr-3">{r.nights}</td>
                   <td className="py-2 pr-3 font-semibold">{r.amount.toLocaleString()}</td>
                   <td className="py-2 pr-3 text-bark-muted">{r.method}</td>
+                  <td className="py-2 pr-3 text-bark-muted">{r.invoice}</td>
                   <td className="py-2">
                     <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_CHIP[r.status] ?? ''}`}>
                       {r.status}

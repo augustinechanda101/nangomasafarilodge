@@ -281,22 +281,25 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
       const room = stay.rooms?.[0];
       const roomNumber = room?.number ?? `#${stay.room_id}`;
       const locName = room?.locations?.[0]?.name;
-      const roomLabel = `${roomNumber}${locName ? ` · ${locName}` : ''}`;
+      // Alert text: guest name · room number · expected/checkout date.
+      // Location shows in the card's corner — no invoice in alerts.
       if (b.status === 'checked_in' && b.checkout_at < now) {
         alerts.push({
           id: 10000 + b.id,
           tag: 'Overdue checkout',
           tone: 'bad',
-          text: `${roomLabel} · ${b.guest_name} · checkout was ${dayLabel(b.checkout_at)}`,
+          text: `${b.guest_name} · ${roomNumber} · checkout was ${dayLabel(b.checkout_at)}`,
           action: 'Check out',
+          location: locName,
         });
       } else if (b.status === 'booked' && b.expected_arrival <= now) {
         alerts.push({
           id: 20000 + b.id,
           tag: 'Awaiting check-in',
           tone: 'warn',
-          text: `${roomLabel} · ${b.guest_name} · expected ${dayLabel(b.expected_arrival)}`,
+          text: `${b.guest_name} · ${roomNumber} · expected ${dayLabel(b.expected_arrival)}`,
           action: 'Check in',
+          location: locName,
         });
       }
     }
@@ -312,8 +315,9 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
       id: 30000 + r.id,
       tag: 'Room on hold',
       tone: 'warn',
-      text: `${r.number} · ${(r.locations as unknown as { name: string } | null)?.name ?? ''} · awaiting payment`,
+      text: `${r.number} · awaiting payment`,
       action: 'Mark Available',
+      location: (r.locations as unknown as { name: string } | null)?.name ?? undefined,
     });
   }
 
