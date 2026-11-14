@@ -1,16 +1,11 @@
--- Nangoma Safari Lodge — canonical schema (Supabase)
--- Run once in the Supabase SQL editor. Idempotent-ish: fresh DB expected.
-
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
--- LOCATIONS  (added: Dam Lodge / Farm House)
 CREATE TABLE locations (
   id          SERIAL PRIMARY KEY,
   name        TEXT NOT NULL UNIQUE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- USERS  (changed: Supabase auth instead of firebase_uid; added 'staff' role)
 CREATE TABLE users (
   id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name        TEXT NOT NULL,
@@ -23,31 +18,30 @@ CREATE TABLE users (
 
 CREATE TABLE rooms (
   id            SERIAL PRIMARY KEY,
-  location_id   INT NOT NULL REFERENCES locations(id),   -- added
+  location_id   INT NOT NULL REFERENCES locations(id),
   number        TEXT NOT NULL,
   type          TEXT,
   nightly_rate  NUMERIC(10,2) NOT NULL,
-  -- ready | needs_inspection | awaiting_cleaning
   housekeeping  TEXT NOT NULL DEFAULT 'ready'
                 CHECK (housekeeping IN ('ready','needs_inspection','awaiting_cleaning')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (location_id, number)                           -- changed: per location
+  UNIQUE (location_id, number)
 );
 
 CREATE TABLE bookings (
   id               SERIAL PRIMARY KEY,
-  invoice          TEXT,                                 -- added: links a group booking
+  invoice          TEXT,
   guest_name       TEXT NOT NULL,
   guest_phone      TEXT NOT NULL,
   expected_arrival TIMESTAMPTZ NOT NULL,
-  checkout_at      TIMESTAMPTZ NOT NULL,                 -- always 10:00, computed on create
+  checkout_at      TIMESTAMPTZ NOT NULL,
   status           TEXT NOT NULL DEFAULT 'booked'
                    CHECK (status IN ('booked','checked_in','checked_out','cancelled')),
   checked_in_at    TIMESTAMPTZ,
-  checked_in_by    INT REFERENCES users(id),             -- nullable until auth is wired
+  checked_in_by    INT REFERENCES users(id),
   checked_out_at   TIMESTAMPTZ,
   checked_out_by   INT REFERENCES users(id),
-  created_by       INT REFERENCES users(id),             -- nullable until auth is wired
+  created_by       INT REFERENCES users(id),
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -55,7 +49,6 @@ CREATE INDEX bookings_invoice_idx    ON bookings (invoice);
 CREATE INDEX bookings_arrival_idx    ON bookings (expected_arrival);
 CREATE INDEX bookings_status_idx     ON bookings (status);
 
--- one row per room the guest sleeps in; a move adds a row
 CREATE TABLE stays (
   id          SERIAL PRIMARY KEY,
   booking_id  INT NOT NULL REFERENCES bookings(id),
@@ -64,7 +57,6 @@ CREATE TABLE stays (
   ends_at     TIMESTAMPTZ NOT NULL,
   active      BOOLEAN NOT NULL DEFAULT true,
   CHECK (ends_at > starts_at),
-  -- the safety net: same room, overlapping time = rejected by Postgres
   EXCLUDE USING gist (
     room_id WITH =,
     tstzrange(starts_at, ends_at) WITH &&
@@ -81,7 +73,7 @@ CREATE TABLE holds (
   ends_at     TIMESTAMPTZ NOT NULL,
   note        TEXT,
   expires_at  TIMESTAMPTZ NOT NULL,
-  set_by      INT REFERENCES users(id),                  -- nullable until auth
+  set_by      INT REFERENCES users(id),
   released    BOOLEAN NOT NULL DEFAULT false
 );
 
@@ -90,11 +82,11 @@ CREATE INDEX holds_room_idx ON holds (room_id);
 CREATE TABLE payments (
   id           SERIAL PRIMARY KEY,
   booking_id   INT NOT NULL REFERENCES bookings(id),
-  amount       NUMERIC(10,2) NOT NULL,    -- negative = credit/refund line
-  method       TEXT NOT NULL,             -- Mobile money | Cash | Bank transfer
+  amount       NUMERIC(10,2) NOT NULL,
+  method       TEXT NOT NULL,
   reference    TEXT,
-  invoice      TEXT,                      -- added: mirrors the booking's invoice
-  recorded_by  INT REFERENCES users(id),  -- nullable until auth
+  invoice      TEXT,
+  recorded_by  INT REFERENCES users(id),
   recorded_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   voided       BOOLEAN NOT NULL DEFAULT false,
   void_reason  TEXT,
@@ -106,7 +98,7 @@ CREATE INDEX payments_invoice_idx ON payments (invoice);
 
 CREATE TABLE activity_log (
   id          BIGSERIAL PRIMARY KEY,
-  user_id     INT REFERENCES users(id),                  -- nullable until auth
+  user_id     INT REFERENCES users(id),
   action      TEXT NOT NULL,
   booking_id  INT REFERENCES bookings(id),
   room_id     INT REFERENCES rooms(id),
@@ -126,11 +118,9 @@ CREATE TABLE notifications (
   at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Seed the two locations
 INSERT INTO locations (name) VALUES ('Dam Lodge'), ('Farm House')
 ON CONFLICT (name) DO NOTHING;
 
--- RLS  (added — required for the publishable key to reach the data)
 ALTER TABLE locations      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rooms          ENABLE ROW LEVEL SECURITY;
@@ -141,8 +131,6 @@ ALTER TABLE payments       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_log   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications  ENABLE ROW LEVEL SECURITY;
 
--- MVP: permissive while the app runs pre-auth. Tighten when Supabase Auth lands:
--- staff/reception read everything; only reception/gm write; users read own row.
 CREATE POLICY "mvp read locations"     ON locations     FOR SELECT USING (true);
 CREATE POLICY "mvp write locations"    ON locations     FOR INSERT WITH CHECK (true);
 
