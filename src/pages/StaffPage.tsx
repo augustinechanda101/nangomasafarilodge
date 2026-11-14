@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LOCATIONS } from '../lib/sampleStaff';
 import { fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
 import type { GridBar } from '../lib/staffTypes';
@@ -50,10 +50,13 @@ export default function StaffPage() {
       });
   }, []);
 
-  const rooms = location === 'all'
-    ? locations.flatMap((l) => l.rooms)
-    : locations.find((l) => l.name === location)?.rooms ?? [];
-  const roomIndexByNumber = new Map(rooms.map((r, i) => [r.name, i]));
+  const rooms = useMemo(
+    () => (location === 'all'
+      ? locations.flatMap((l) => l.rooms)
+      : locations.find((l) => l.name === location)?.rooms ?? []),
+    [location, locations],
+  );
+  const roomIndexByNumber = useMemo(() => new Map(rooms.map((r, i) => [r.name, i])), [rooms]);
   const numColumns = zoomLevel === 1 ? 7 : zoomLevel === 2 ? 4 : 2;
   const dayLabels = nextDayLabels(numColumns);
   const isOneDay = viewMode === 'today' || viewMode === 'day';
