@@ -342,6 +342,7 @@ export default function StaffPage() {
                   setSelectedRoom({ name: room.name, number: roomNumber, room, bars, dayLabels });
                 }}
                 zoomLevel={zoomLevel}
+                summary={false}
               />
             ) : (
               /* One-day view, single location: info above the panel, compact 2-by-2 grid */
