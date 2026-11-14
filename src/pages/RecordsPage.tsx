@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import RecordsView from '../components/RecordsView';
-import FinanceCard from '../components/FinanceCard';
 import { fetchRecords } from '../lib/data';
 import type { BookingRecord } from '../lib/staffTypes';
 import StaffHeader from '../components/StaffHeader';
@@ -21,9 +20,7 @@ export default function RecordsPage() {
         <div className="flex items-center justify-between">
           <Link to="/reception" className="text-sm text-bark-muted hover:underline">← Back to Reception</Link>
         </div>
-        <StaffHeader role="Reception — Records" who="[Receptionist name]" />
-
-        <FinanceCard items={records} title="Financial records — all shown" />
+        <StaffHeader role="Reception — Booking Records" who="[Receptionist name]" />
 
         <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
           <RecordsView records={records} />
