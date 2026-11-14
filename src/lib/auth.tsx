@@ -61,14 +61,28 @@ export function useProfile(): Profile | null {
   return profile;
 }
 
-// Redirects to /login when there is no session
-export function RequireAuth({ children }: { children: ReactNode }) {
+// Redirects to /login without a session; bounces wrong roles to their own home page
+const homeFor = (role?: string) =>
+  role === 'gm' ? '/gm' : role === 'reception' ? '/reception' : '/staff';
+
+export function RequireAuth({ children, roles }: { children: ReactNode; roles?: string[] }) {
   const { loading, session } = useSession();
+  const profile = useProfile();
   const navigate = useNavigate();
+
   useEffect(() => {
-    if (!loading && !session) navigate('/login', { replace: true });
-  }, [loading, session, navigate]);
-  if (loading) return <LoadingScreen />;
-  if (!session) return null;
+    if (loading) return;
+    if (!session) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    if (roles && profile && !roles.includes(profile.role)) {
+      navigate(homeFor(profile.role), { replace: true });
+    }
+  }, [loading, session, profile, roles, navigate]);
+
+  if (loading || !session) return <LoadingScreen />;
+  if (roles && !profile) return <LoadingScreen />;
+  if (roles && profile && !roles.includes(profile.role)) return <LoadingScreen />;
   return <>{children}</>;
 }

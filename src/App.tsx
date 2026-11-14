@@ -18,13 +18,13 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/guest" element={<PublicPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/staff" element={<RequireAuth><StaffPage /></RequireAuth>} />
-        <Route path="/reception" element={<RequireAuth><ReceptionPage /></RequireAuth>} />
-        <Route path="/reception/booking" element={<RequireAuth><BookingPage /></RequireAuth>} />
-        <Route path="/reception/records" element={<RequireAuth><RecordsPage /></RequireAuth>} />
-        <Route path="/reception/logs" element={<RequireAuth><LogsPage /></RequireAuth>} />
-        <Route path="/reception/finance" element={<RequireAuth><FinancePage /></RequireAuth>} />
-        <Route path="/gm" element={<RequireAuth><GmPage /></RequireAuth>} />
+        <Route path="/staff" element={<RequireAuth roles={['staff']}><StaffPage /></RequireAuth>} />
+        <Route path="/reception" element={<RequireAuth roles={['reception', 'gm']}><ReceptionPage /></RequireAuth>} />
+        <Route path="/reception/booking" element={<RequireAuth roles={['reception', 'gm']}><BookingPage /></RequireAuth>} />
+        <Route path="/reception/records" element={<RequireAuth roles={['reception', 'gm']}><RecordsPage /></RequireAuth>} />
+        <Route path="/reception/logs" element={<RequireAuth roles={['reception', 'gm']}><LogsPage /></RequireAuth>} />
+        <Route path="/reception/finance" element={<RequireAuth roles={['reception', 'gm']}><FinancePage /></RequireAuth>} />
+        <Route path="/gm" element={<RequireAuth roles={['gm']}><GmPage /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
   );
