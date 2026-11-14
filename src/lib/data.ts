@@ -547,9 +547,6 @@ export async function fetchGmData(): Promise<GmData> {
     const loc = roomLoc.get(id);
     if (loc) soldPerLoc.set(loc, (soldPerLoc.get(loc) ?? 0) + 1);
   }
-  const tonightNote = [...locTotals.entries()]
-    .map(([loc, n]) => `${loc} ${soldPerLoc.get(loc) ?? 0}/${n}`)
-    .join(' · ');
 
   // 2. Today's money
   const todayPayments = live.filter((p) => lusakaDate(p.recorded_at) === today);
@@ -566,7 +563,8 @@ export async function fetchGmData(): Promise<GmData> {
   const awaitedToday = arrivalsToday.filter((b) => (b as { status: string }).status === 'booked').length;
 
   const kpis: Kpi[] = [
-    { label: 'Tonight', value: `${soldRoomIds.size} / ${rooms.length}`, note: tonightNote },
+    { label: 'Tonight', value: `${soldRoomIds.size} / ${rooms.length}`, note: 'rooms sold for tonight',
+      columns: [...locTotals.entries()].map(([loc, n]) => ({ label: loc, value: `${soldPerLoc.get(loc) ?? 0}/${n}` })) },
     { label: "Today's money", value: `K${revToday.toLocaleString()}`, note: `${todayPayments.length} payments recorded` },
     { label: 'In house', value: String(inHouse), note: 'bookings on property' },
     { label: 'Arrivals today', value: String(arrivalsToday.length), note: `${awaitedToday} still awaited` },
