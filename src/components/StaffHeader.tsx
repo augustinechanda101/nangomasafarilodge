@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { signOut, useProfile } from '../lib/auth';
 
 interface Props {
@@ -9,13 +9,20 @@ interface Props {
   location?: string;
   onLocationChange?: (location: string) => void;
   action?: ReactNode;
+  menuItems?: ReactNode;
 }
 
-export default function StaffHeader({ role, who, locations, location, onLocationChange, action }: Props) {
+export default function StaffHeader({ role, who, locations, location, onLocationChange, action, menuItems }: Props) {
   const navigate = useNavigate();
   const profile = useProfile();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const route = useLocation();
+
+  // Close the menu whenever the route changes (e.g. a menu link was clicked)
+  useEffect(() => setMenuOpen(false), [route.pathname]);
 
   const logout = async () => {
+    setMenuOpen(false);
     await signOut();
     navigate('/', { replace: true });
   };
@@ -60,9 +67,38 @@ export default function StaffHeader({ role, who, locations, location, onLocation
         <span className="hidden text-[13px] text-bark-muted sm:inline">
           {profile?.name ?? who}
         </span>
-        <button type="button" onClick={logout} className="min-h-10 rounded-xl bg-bark-soft px-3.5 text-sm font-semibold text-bark">
-          Log out
-        </button>
+
+        {/* Hamburger menu */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Menu"
+            className="flex min-h-10 w-10 items-center justify-center rounded-xl bg-bark-soft text-bark hover:bg-bark-off"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-12 z-50 flex w-44 flex-col rounded-xl border border-sand-line bg-sand-card p-1.5 shadow-lg">
+                {menuItems}
+                <div className="my-1 h-px bg-sand-line" />
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="min-h-10 rounded-lg px-3 text-left text-sm font-semibold text-brick-ink hover:bg-brick-chip"
+                >
+                  Log out
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

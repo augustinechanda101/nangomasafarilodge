@@ -152,17 +152,21 @@ export default function ReceptionPage() {
               >
                 Records
               </Link>
-              <Link
-                to="/reception/logs"
-                className="min-h-10 rounded-xl bg-bark-soft px-4 text-sm font-semibold text-bark hover:bg-bark-off transition-colors flex items-center justify-center"
-              >
-                Logs
-              </Link>
+            </>
+          }
+          menuItems={
+            <>
               <Link
                 to="/reception/finance"
-                className="min-h-10 rounded-xl bg-bark-soft px-4 text-sm font-semibold text-bark hover:bg-bark-off transition-colors flex items-center justify-center"
+                className="min-h-10 rounded-lg px-3 text-left text-sm font-semibold text-bark hover:bg-sand-line"
               >
                 Finance
+              </Link>
+              <Link
+                to="/reception/logs"
+                className="min-h-10 rounded-lg px-3 text-left text-sm font-semibold text-bark hover:bg-sand-line"
+              >
+                Logs
               </Link>
             </>
           }
