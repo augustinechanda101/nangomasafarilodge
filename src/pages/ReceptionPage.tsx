@@ -489,6 +489,7 @@ export default function ReceptionPage() {
           bars={selectedRoom.bars}
           dayLabels={selectedRoom.dayLabels}
           onSetState={handleSetState}
+          canBook
           onClose={() => setSelectedRoom(null)}
         />
       )}

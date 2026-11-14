@@ -3,6 +3,8 @@ import type { BookingDraft } from '../lib/staffTypes';
 
 interface Props {
   locations: { name: string; rooms: string[] }[];
+  initialLocation?: string;
+  initialRoom?: string;
   onSave: (draft: BookingDraft) => void;
   onHold: (draft: BookingDraft) => void;
 }
@@ -20,11 +22,11 @@ function checkoutOf(arrival: string, nights: number): string {
   return d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function NewBookingForm({ locations, onSave, onHold }: Props) {
+export default function NewBookingForm({ locations, initialLocation, initialRoom, onSave, onHold }: Props) {
   const [mode, setMode] = useState<'single' | 'multiple'>('single');
   const [d, setD] = useState<BookingDraft>({
-    location: locations[0]?.name ?? '',
-    guestName: '', phone: '', rooms: [], nights: 1,
+    location: initialLocation ?? locations[0]?.name ?? '',
+    guestName: '', phone: '', rooms: initialRoom ? [initialRoom] : [], nights: 1,
     arrival: '', arrivalTime: '', amount: '', method: 'Mobile money', reference: '', invoice: '',
   });
   const set = <K extends keyof BookingDraft>(k: K, v: BookingDraft[K]) => setD((p) => ({ ...p, [k]: v }));

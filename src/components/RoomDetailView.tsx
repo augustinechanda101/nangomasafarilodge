@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { BarKind, GridBar, GridRoom } from '../lib/staffTypes';
 
 const SPINNER = <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />;
@@ -40,12 +41,14 @@ interface Props {
   bars: GridBar[];
   dayLabels: string[];
   onSetState?: (state: string) => void;
+  canBook?: boolean;
   onClose: () => void;
 }
 
 export default function RoomDetailView({
-  roomName, roomNumber, room, bars, dayLabels, onSetState, onClose,
+  roomName, roomNumber, room, bars, dayLabels, onSetState, canBook, onClose,
 }: Props) {
+  const navigate = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
   const roomBars = bars.filter((b) => b.room === roomNumber);
   const state = room?.state ?? 'Available';
@@ -146,6 +149,21 @@ export default function RoomDetailView({
               </div>
             )}
           </div>
+        )}
+
+        {/* Book this room now */}
+        {canBook && room?.state === 'Available' && (
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `/reception/booking?room=${encodeURIComponent(roomName)}&location=${encodeURIComponent(room?.location ?? '')}`,
+              )
+            }
+            className="min-h-11 rounded-xl bg-bark-deep px-3.5 text-sm font-semibold text-sand-card hover:bg-bark"
+          >
+            Book Now
+          </button>
         )}
 
         {/* Bookings in the visible window */}

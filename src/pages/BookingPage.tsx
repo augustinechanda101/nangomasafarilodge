@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import NewBookingForm from '../components/NewBookingForm';
 import { createBooking, fetchLocationsWithRooms, type LocationWithRooms } from '../lib/data';
 import { LOCATIONS } from '../lib/sampleStaff';
 import StaffHeader from '../components/StaffHeader';
 
 export default function BookingPage() {
+  const [params] = useSearchParams();
+  const initialLocation = params.get('location') ?? undefined;
+  const initialRoom = params.get('room') ?? undefined;
+
   const [locations, setLocations] = useState<LocationWithRooms[]>([]);
   const [saved, setSaved] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -57,6 +61,8 @@ export default function BookingPage() {
             )}
             <NewBookingForm
               locations={locations.map((l) => ({ name: l.name, rooms: l.rooms.map((r) => r.name) }))}
+              initialLocation={initialLocation}
+              initialRoom={initialRoom}
               onSave={save}
               onHold={save}
             />
