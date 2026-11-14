@@ -134,6 +134,13 @@ export async function fetchWindowBars(
 ): Promise<GridBar[]> {
   const rows = await fetchBookingRows();
   const windowStart = new Date(windowStartISO + 'T00:00:00').getTime();
+  // Day indexes come from LUSAKA CALENDAR DATES: a bar spans [arrival date,
+  // checkout date) — 1 night = exactly 1 column, and the checkout day's
+  // column stays sellable (the guest is gone by 10:00).
+  const dayIndex = (iso: string) => {
+    const d = lusakaDate(iso);
+    return Math.round((new Date(d + 'T00:00:00').getTime() - windowStart) / DAY_MS);
+  };
   const bars: GridBar[] = [];
 
   for (const b of rows) {
@@ -141,10 +148,8 @@ export async function fetchWindowBars(
       const idx = roomIndexById.get(stay.room_id);
       if (idx === undefined) continue;
 
-      const startDay = Math.floor((new Date(stay.starts_at).getTime() - windowStart) / DAY_MS);
-      const endDay = Math.ceil((new Date(stay.ends_at).getTime() - windowStart) / DAY_MS);
-      const start = Math.max(0, startDay);
-      const end = Math.min(numDays, endDay);
+      const start = Math.max(0, dayIndex(stay.starts_at));
+      const end = Math.min(numDays, dayIndex(stay.ends_at));
       if (end <= start) continue;
 
       bars.push({
