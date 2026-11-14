@@ -1,20 +1,34 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FEED, KPIS, PENDING, REVENUE, STAFF_TOTALS } from '../lib/sampleStaff';
+import { fetchGmData, type GmData } from '../lib/data';
+import { useProfile } from '../lib/auth';
 import ActivityFeed from '../components/ActivityFeed';
-import ApprovalList from '../components/ApprovalList';
 import KpiCard from '../components/KpiCard';
+import LoadingScreen from '../components/LoadingScreen';
 import RevenueChart from '../components/RevenueChart';
 import StaffHeader from '../components/StaffHeader';
 import StaffTotals from '../components/StaffTotals';
 
 export default function GmPage() {
-  const [pending, setPending] = useState(PENDING);
-  // TODO: call POST /api/staff/:id/approve and /reject, then remove from the list
-  const resolve = (id: number, verb: 'approve' | 'reject') => {
-    console.log(`POST /api/staff/${id}/${verb}`);
-    setPending((p) => p.filter((s) => s.id !== id));
-  };
+  const profile = useProfile();
+  const [data, setData] = useState<GmData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchGmData()
+      .then(setData)
+      .catch((e) => setError(e.message ?? 'Failed to load'));
+  }, []);
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-sand font-sans text-bark">
+        <p className="font-semibold">Could not load the dashboard</p>
+        <p className="text-sm text-bark-muted">{error}</p>
+      </div>
+    );
+  }
+  if (!data) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen bg-sand font-sans text-bark">
@@ -22,20 +36,19 @@ export default function GmPage() {
         <div className="flex items-center justify-between">
           <Link to="/" className="text-sm text-bark-muted hover:underline">← Back to Home</Link>
         </div>
-        <StaffHeader role="General manager" who="[GM name]" />
+        <StaffHeader role="General manager" who={profile?.name ?? 'Management'} />
 
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {KPIS.map((k) => <KpiCard key={k.label} kpi={k} />)}
+          {data.kpis.map((k) => <KpiCard key={k.label} kpi={k} />)}
         </div>
 
         <div className="flex flex-col items-start gap-4 lg:flex-row">
           <div className="flex w-full flex-[3] flex-col gap-4">
-            <RevenueChart data={REVENUE} />
-            <StaffTotals rows={STAFF_TOTALS} />
+            <RevenueChart data={data.revenue} />
+            <StaffTotals rows={data.staffTotals} />
           </div>
           <div className="flex w-full flex-[2] flex-col gap-4">
-            <ApprovalList items={pending} onApprove={(id) => resolve(id, 'approve')} onReject={(id) => resolve(id, 'reject')} />
-            <ActivityFeed items={FEED} />
+            <ActivityFeed items={data.feed} />
           </div>
         </div>
       </div>

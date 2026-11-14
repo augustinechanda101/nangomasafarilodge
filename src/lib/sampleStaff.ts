@@ -1,4 +1,4 @@
-import type { AlertItem, BarKind, BookingRecord, FeedItem, GridBar, GridRoom, Kpi, LogEvent, PendingStaff, RevenuePoint, StaffTotal } from './staffTypes';
+import type { AlertItem, BarKind, BookingRecord, GridBar, GridRoom, LogEvent } from './staffTypes';
 
 // All sample data. Replace with Express calls when the backend exists.
 export const DAYS = ['Thu 5', 'Fri 6', 'Sat 7', 'Sun 8', 'Mon 9', 'Tue 10', 'Wed 11'];
@@ -150,35 +150,4 @@ export const ALERTS: AlertItem[] = [
   { id: 1, tag: 'Overdue checkout', tone: 'bad', text: 'Room 3 · Banda · checkout was 10:00', action: 'Check out', location: 'Dam Lodge' },
   { id: 2, tag: 'Awaiting check-in', tone: 'warn', text: 'Room 5 · Phiri · expected 4:00 AM', action: 'Check in', location: 'Dam Lodge' },
   { id: 3, tag: 'Needs inspection', tone: 'warn', text: 'Room 2 · guest moved to Room 7 at 3:05 PM', action: 'Mark ready', location: 'Farm House' },
-];
-
-export const KPIS: Kpi[] = [
-  { label: 'Revenue today', value: 'K3,200', note: 'Sample data' },
-  { label: 'This week', value: 'K27,600', note: 'Last 7 days' },
-  { label: 'This month', value: 'K96,300', note: '1 to 5 Nov' },
-  { label: 'Occupancy tonight', value: '6 of 8 rooms', note: '75%' },
-];
-
-export const REVENUE: RevenuePoint[] = [
-  { day: 'Fri', amount: 3000 }, { day: 'Sat', amount: 4200 }, { day: 'Sun', amount: 3100 },
-  { day: 'Mon', amount: 5600 }, { day: 'Tue', amount: 4800 }, { day: 'Wed', amount: 3700 },
-  { day: 'Thu', amount: 3200, today: true },
-];
-
-export const STAFF_TOTALS: StaffTotal[] = [
-  { name: 'Receptionist A', bookings: 9, amount: 15300 },
-  { name: 'Receptionist B', bookings: 7, amount: 9800 },
-  { name: 'GM', bookings: 1, amount: 2500 },
-];
-
-export const PENDING: PendingStaff[] = [
-  { id: 1, name: 'Mutale K.' },
-  { id: 2, name: 'Bwalya S.' },
-];
-
-export const FEED: FeedItem[] = [
-  { id: 1, title: 'Room 4 to Room 7: aircon fault', meta: 'Receptionist A · 3:05 PM', unread: true },
-  { id: 2, title: 'Payment of K500 voided: wrong amount', meta: 'Receptionist B · 1:40 PM', unread: true },
-  { id: 3, title: 'Room 6 extended by 1 night', meta: 'Receptionist A · Yesterday', unread: false },
-  { id: 4, title: 'Booking cancelled, Room 8', meta: 'Receptionist B · Yesterday', unread: false },
 ];

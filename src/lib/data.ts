@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { AlertItem, BookingDraft, BookingRecord, GridBar, GridRoom, LogEvent } from './staffTypes';
+import type { AlertItem, BookingDraft, BookingRecord, GridBar, GridRoom, Kpi, LogEvent, RevenuePoint } from './staffTypes';
 
 export interface LocationWithRooms {
   id: number;
@@ -306,4 +306,120 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
   }
 
   return alerts;
+}
+
+// ---------------------------------------------------------------------------
+// GM dashboard — everything computed from real tables, Lusaka time
+// ---------------------------------------------------------------------------
+
+const lusakaDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' });
+
+export interface GmFeedItem { id: number; text: string; when: string }
+export interface StaffActions { name: string; actions: number }
+export interface GmData {
+  kpis: Kpi[];
+  revenue: RevenuePoint[];
+  staffTotals: StaffActions[];
+  feed: GmFeedItem[];
+}
+
+export async function fetchGmData(): Promise<GmData> {
+  const [roomsRes, bookingsRes, paymentsRes, logsRes] = await Promise.all([
+    supabase.from('rooms').select('id, housekeeping'),
+    supabase
+      .from('bookings')
+      .select('id, status, expected_arrival, checkout_at, stays (room_id, starts_at, ends_at)')
+      .neq('status', 'cancelled'),
+    supabase.from('payments').select('amount, recorded_at, voided'),
+    supabase.from('activity_log').select('id, action, at').order('at', { ascending: false }),
+  ]);
+  if (roomsRes.error) throw roomsRes.error;
+  if (bookingsRes.error) throw bookingsRes.error;
+  if (paymentsRes.error) throw paymentsRes.error;
+  if (logsRes.error) throw logsRes.error;
+
+  const rooms = roomsRes.data ?? [];
+  const bookings = bookingsRes.data ?? [];
+  const payments = (paymentsRes.data ?? []) as { amount: number; recorded_at: string; voided: boolean }[];
+  const logs = logsRes.data ?? [];
+
+  const today = lusakaDate(new Date().toISOString());
+  const live = payments.filter((p) => !p.voided);
+
+  // --- KPIs ---
+  const inHouse = bookings.filter((b) => b.status === 'checked_in').length;
+  const arrivalsToday = bookings.filter(
+    (b) => b.status === 'booked' && lusakaDate(b.expected_arrival) === today,
+  ).length;
+  const departuresToday = bookings.filter(
+    (b) => b.status === 'checked_in' && lusakaDate(b.checkout_at) === today,
+  ).length;
+  const roomsReady = rooms.filter((r) => r.housekeeping === 'ready').length;
+
+  const paidOn = (dateStr: string) =>
+    live.filter((p) => lusakaDate(p.recorded_at) === dateStr);
+  const revToday = paidOn(today).reduce((s, p) => s + Number(p.amount), 0);
+
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const monthPayments = live.filter((p) => lusakaDate(p.recorded_at) >= monthStart);
+  const revMonth = monthPayments.reduce((s, p) => s + Number(p.amount), 0);
+
+  // Occupancy month-to-date: nights slept (arrival day .. day before checkout)
+  const totalRooms = rooms.length || 1;
+  const daysElapsed = Number(today.slice(8)) ; // day-of-month, "2026-11-14" → 14
+  let occupiedNights = 0;
+  for (let d = 1; d <= daysElapsed; d++) {
+    const day = `${monthStart.slice(0, 8)}${String(d).padStart(2, '0')}`;
+    for (const b of bookings) {
+      for (const st of b.stays ?? []) {
+        const a = lusakaDate(st.starts_at);
+        const c = lusakaDate(st.ends_at);
+        if (a <= day && day < c) occupiedNights++;
+      }
+    }
+  }
+  const occupancy = Math.round((occupiedNights / (totalRooms * daysElapsed)) * 100);
+
+  const kpis: Kpi[] = [
+    { label: 'In house', value: String(inHouse), note: 'bookings checked in' },
+    { label: 'Arrivals today', value: String(arrivalsToday), note: 'expected today' },
+    { label: 'Departures today', value: String(departuresToday), note: 'due out by 10:00' },
+    { label: 'Rooms ready', value: `${roomsReady} / ${rooms.length}`, note: 'Dam Lodge + Farm House' },
+    { label: 'Occupancy', value: `${occupancy}%`, note: 'month to date' },
+    { label: 'Revenue this month', value: `K${revMonth.toLocaleString()}`, note: `${monthPayments.length} payments · K${revToday.toLocaleString()} today` },
+  ];
+
+  // --- Revenue, last 14 days (payments by recorded date, zero-filled) ---
+  const revenue: RevenuePoint[] = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * DAY_MS);
+    const day = lusakaDate(d.toISOString());
+    const amount = paidOn(day).reduce((s, p) => s + Number(p.amount), 0);
+    revenue.push({ day: day.slice(5), amount, today: i === 0 });
+  }
+
+  // --- Actions by staff, last 7 days (from the stamped log entries) ---
+  const weekAgo = lusakaDate(new Date(now.getTime() - 7 * DAY_MS).toISOString());
+  const byStaff = new Map<string, number>();
+  for (const l of logs) {
+    if (lusakaDate(l.at) < weekAgo) continue;
+    const m = l.action.match(/— by (.+)$/);
+    if (m) byStaff.set(m[1], (byStaff.get(m[1]) ?? 0) + 1);
+  }
+  const staffTotals: StaffActions[] = [...byStaff.entries()]
+    .map(([name, actions]) => ({ name, actions }))
+    .sort((a, b) => b.actions - a.actions);
+
+  // --- Recent activity feed ---
+  const feed: GmFeedItem[] = logs.slice(0, 12).map((l) => ({
+    id: l.id,
+    text: l.action,
+    when: lusakaDate(l.at) === today
+      ? new Date(l.at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit' })
+      : new Date(l.at).toLocaleString('en-GB', { timeZone: 'Africa/Lusaka', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+  }));
+
+  return { kpis, revenue, staffTotals, feed };
 }

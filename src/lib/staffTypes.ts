@@ -25,9 +25,6 @@ export interface BookingDraft {
 
 export interface Kpi { label: string; value: string; note: string }
 export interface RevenuePoint { day: string; amount: number; today?: boolean }
-export interface StaffTotal { name: string; bookings: number; amount: number }
-export interface PendingStaff { id: number; name: string }
-export interface FeedItem { id: number; title: string; meta: string; unread: boolean }
 
 export interface BookingRecord {
   guest: string;
