@@ -27,7 +27,9 @@ export default function FinancePage() {
         </div>
         <StaffHeader role="Reception — Finance" who="[Receptionist name]" />
 
-        <FinanceView records={records} />
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+          <FinanceView records={records} />
+        </div>
       </div>
     </div>
   );
