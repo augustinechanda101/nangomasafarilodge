@@ -55,7 +55,7 @@ export default function StaffHeader({ role, who, locations, location, onLocation
             <select
               value={location}
               onChange={(e) => onLocationChange(e.target.value)}
-              className="min-h-10 rounded-xl border border-bark-field bg-sand-card px-3 text-sm font-semibold text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre"
+              className="min-h-10 rounded-xl border border-bark-field bg-sand-card px-3 pr-9 text-sm font-semibold text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-ochre"
             >
               <option value="all">All Locations</option>
               {locations.map((l) => (
