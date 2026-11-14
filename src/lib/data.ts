@@ -384,6 +384,7 @@ export interface StaffMember {
 export interface GmData {
   kpis: Kpi[];
   revenue: RevenuePoint[];
+  revenueMonths: RevenuePoint[];
   staffTotals: StaffActions[];
 }
 
@@ -582,6 +583,18 @@ export async function fetchGmData(): Promise<GmData> {
     revenue.push({ day: day.slice(5), amount, today: i === 0 });
   }
 
+  // --- Revenue, last 7 months (payments by recorded month, zero-filled) ---
+  const revenueMonths: RevenuePoint[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const prefix = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const amount = live.filter((p) => lusakaDate(p.recorded_at).slice(0, 7) === prefix).reduce((s, p) => s + Number(p.amount), 0);
+    const label = d.getFullYear() === now.getFullYear()
+      ? d.toLocaleDateString('en-GB', { month: 'short' })
+      : `${d.toLocaleDateString('en-GB', { month: 'short' })} '${String(d.getFullYear()).slice(2)}`;
+    revenueMonths.push({ day: label, amount, today: i === 0 });
+  }
+
   // --- Actions by staff, last 7 days (desk actions only — staff-account
   //     actions belong to the management Logs, not here) ---
   const weekAgo = lusakaDate(new Date(now.getTime() - 7 * DAY_MS).toISOString());
@@ -596,5 +609,5 @@ export async function fetchGmData(): Promise<GmData> {
     .map(([name, actions]) => ({ name, actions }))
     .sort((a, b) => b.actions - a.actions);
 
-  return { kpis, revenue, staffTotals };
+  return { kpis, revenue, revenueMonths, staffTotals };
 }

@@ -95,7 +95,7 @@ export default function GmPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               {data.kpis.map((k) => <KpiCard key={k.label} kpi={k} />)}
             </div>
-            <RevenueChart data={data.revenue} />
+            <RevenueChart data={data.revenue} months={data.revenueMonths} />
           </>
         )}
 
