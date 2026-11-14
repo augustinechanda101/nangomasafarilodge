@@ -570,8 +570,11 @@ export async function fetchGmData(): Promise<GmData> {
     { label: 'Tonight', value: `${soldRoomIds.size} / ${rooms.length}`, note: 'rooms sold for tonight',
       columns: [...locTotals.entries()].map(([loc, n]) => ({ label: loc, value: `${soldPerLoc.get(loc) ?? 0}/${n}` })) },
     { label: "Today's money", value: `K${revToday.toLocaleString()}`, note: `${todayPayments.length} payments recorded` },
-    { label: 'Due out tomorrow', value: String(dueOutTomorrow), note: 'rooms freeing up' },
-    { label: 'Arrivals today', value: String(arrivalsToday.length), note: `${awaitedToday} still awaited` },
+    { label: 'Guest flow', value: '', note: `${awaitedToday} still awaited today`,
+      columns: [
+        { label: 'Arrivals today', value: String(arrivalsToday.length), sub: `${awaitedToday} still awaited` },
+        { label: 'Due out tomorrow', value: String(dueOutTomorrow), sub: 'rooms freeing up' },
+      ] },
   ];
 
   // --- Revenue, last 7 days (payments by recorded date, zero-filled) ---

@@ -23,7 +23,7 @@ export interface BookingDraft {
   invoice: string;
 }
 
-export interface Kpi { label: string; value: string; note: string; columns?: { label: string; value: string }[] }
+export interface Kpi { label: string; value: string; note: string; columns?: { label: string; value: string; sub?: string }[] }
 export interface RevenuePoint { day: string; amount: number; today?: boolean }
 
 export interface BookingRecord {
