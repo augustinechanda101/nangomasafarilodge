@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ALERTS, GRID_BARS, LOCATIONS } from '../lib/sampleStaff';
-import { bookingAction, fetchAlerts, fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
-import type { AlertItem, GridBar } from '../lib/staffTypes';
+import { bookingAction, fetchAlerts, fetchLocationsWithRooms, fetchWindowBars, setRoomState, type LocationWithRooms } from '../lib/data';
+import type { AlertItem, GridBar, GridRoom } from '../lib/staffTypes';
 import AlertCard from '../components/AlertCard';
 import RoomGrid from '../components/RoomGrid';
 import RoomDetailView from '../components/RoomDetailView';
@@ -36,7 +36,7 @@ function nextDayLabels(n: number): string[] {
 export default function ReceptionPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [selectedRoom, setSelectedRoom] = useState<{
-    name: string; number: number; bars: GridBar[]; dayLabels: string[];
+    name: string; number: number; room?: GridRoom; bars: GridBar[]; dayLabels: string[];
   } | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1); // 1 = 7 days, 2 = 4 days, 3 = 2 days
   const [openDates, setOpenDates] = useState<string[]>([]);
@@ -124,6 +124,16 @@ export default function ReceptionPage() {
     const err = await bookingAction(verb, bar.bookingId, bar.label);
     if (err) console.error('action failed', err);
     loadBars();
+  };
+
+  const handleSetState = async (state: string) => {
+    if (!selectedRoom?.room?.id) return;
+    const err = await setRoomState(selectedRoom.room.id, state, selectedRoom.name);
+    if (err) console.error('room state failed', err);
+    setSelectedRoom(null);
+    fetchLocationsWithRooms().then(setLocations).catch(() => {});
+    loadBars();
+    loadAlerts();
   };
 
   const openDate = (dateStr: string) => {
@@ -388,7 +398,7 @@ export default function ReceptionPage() {
                             onAction={handleAction}
                             onRoomClick={(roomNumber) => {
                               const room = g.rooms[roomNumber - 1];
-                              setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
+                              setSelectedRoom({ name: room.name, number: roomNumber, room, bars: g.bars, dayLabels: [dayLabels[0]] });
                             }}
                           />
                         </div>
@@ -424,7 +434,7 @@ export default function ReceptionPage() {
                   bars={bars}
                   onRoomClick={(roomNumber) => {
                     const room = rooms[roomNumber - 1];
-                    setSelectedRoom({ name: room.name, number: roomNumber, bars, dayLabels: [dayLabels[0]] });
+                    setSelectedRoom({ name: room.name, number: roomNumber, room, bars, dayLabels: [dayLabels[0]] });
                   }}
                   zoomLevel={1}
                   canAct
@@ -468,8 +478,10 @@ export default function ReceptionPage() {
         <RoomDetailView
           roomName={selectedRoom.name}
           roomNumber={selectedRoom.number}
+          room={selectedRoom.room}
           bars={selectedRoom.bars}
           dayLabels={selectedRoom.dayLabels}
+          onSetState={handleSetState}
           onClose={() => setSelectedRoom(null)}
         />
       )}

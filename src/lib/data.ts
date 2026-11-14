@@ -22,6 +22,7 @@ export async function fetchLocationsWithRooms(): Promise<LocationWithRooms[]> {
     rooms: (l.rooms ?? [])
       .sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }))
       .map((r) => ({
+        id: r.id,
         name: r.number,
         state: r.housekeeping === 'ready' ? 'Available' : r.housekeeping,
         type: r.type ?? undefined,
@@ -155,6 +156,14 @@ export async function bookingAction(verb: string, bookingId: number, label: stri
   const { error } = await supabase.from('bookings').update(patch).eq('id', bookingId);
   if (error) return error.message;
   await supabase.from('activity_log').insert({ action: `${verb}: ${label}`, booking_id: bookingId });
+  return null;
+}
+
+// Room state actions: processing / maintenance / unavailable / back to ready
+export async function setRoomState(roomId: number, housekeeping: string, roomLabel: string): Promise<string | null> {
+  const { error } = await supabase.from('rooms').update({ housekeeping }).eq('id', roomId);
+  if (error) return error.message;
+  await supabase.from('activity_log').insert({ action: `room ${housekeeping}: ${roomLabel}` });
   return null;
 }
 

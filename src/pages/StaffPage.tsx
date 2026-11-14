@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LOCATIONS } from '../lib/sampleStaff';
 import { fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
-import type { GridBar } from '../lib/staffTypes';
+import type { GridBar, GridRoom } from '../lib/staffTypes';
 import RoomGrid from '../components/RoomGrid';
 import RoomDetailView from '../components/RoomDetailView';
 import MonthlyGrid from '../components/MonthlyGrid';
@@ -33,7 +33,7 @@ function nextDayLabels(n: number): string[] {
 export default function StaffPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [selectedRoom, setSelectedRoom] = useState<{
-    name: string; number: number; bars: GridBar[]; dayLabels: string[];
+    name: string; number: number; room?: GridRoom; bars: GridBar[]; dayLabels: string[];
   } | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1); // 1 = 7 days, 2 = 4 days, 3 = 2 days
   const [openDates, setOpenDates] = useState<string[]>([]);
@@ -312,7 +312,7 @@ export default function StaffPage() {
                             bars={g.bars}
                             onRoomClick={(roomNumber) => {
                               const room = g.rooms[roomNumber - 1];
-                              setSelectedRoom({ name: room.name, number: roomNumber, bars: g.bars, dayLabels: [dayLabels[0]] });
+                              setSelectedRoom({ name: room.name, number: roomNumber, room, bars: g.bars, dayLabels: [dayLabels[0]] });
                             }}
                           />
                         </div>
@@ -348,7 +348,7 @@ export default function StaffPage() {
                   bars={bars}
                   onRoomClick={(roomNumber) => {
                     const room = rooms[roomNumber - 1];
-                    setSelectedRoom({ name: room.name, number: roomNumber, bars, dayLabels: [dayLabels[0]] });
+                    setSelectedRoom({ name: room.name, number: roomNumber, room, bars, dayLabels: [dayLabels[0]] });
                   }}
                   zoomLevel={1}
                 />
@@ -378,6 +378,7 @@ export default function StaffPage() {
         <RoomDetailView
           roomName={selectedRoom.name}
           roomNumber={selectedRoom.number}
+          room={selectedRoom.room}
           bars={selectedRoom.bars}
           dayLabels={selectedRoom.dayLabels}
           onClose={() => setSelectedRoom(null)}
