@@ -1,27 +1,40 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { signOut, useProfile } from '../lib/auth';
 
 interface Props {
   role: string;
-  who: string;
-  onLogout?: () => void;
+  who?: string;
   locations?: { name: string }[];
   location?: string;
   onLocationChange?: (location: string) => void;
   action?: ReactNode;
 }
 
-export default function StaffHeader({ role, who, onLogout, locations, location, onLocationChange, action }: Props) {
+export default function StaffHeader({ role, who, locations, location, onLocationChange, action }: Props) {
+  const navigate = useNavigate();
+  const profile = useProfile();
+
+  const logout = async () => {
+    await signOut();
+    navigate('/', { replace: true });
+  };
+
   return (
     <header className="flex items-start justify-between gap-3">
       <div className="flex flex-col gap-1.5">
-        <Link to="/" aria-label="Back to home" className="self-start">
+        <button
+          type="button"
+          onClick={logout}
+          aria-label="Log out"
+          className="self-start cursor-pointer"
+        >
           <img
             src="/nangomalogo.webp"
             alt="Nangoma Safari Lodge"
             className="h-20 w-auto rounded-xl transition-opacity hover:opacity-80"
           />
-        </Link>
+        </button>
         <div className="flex items-center gap-2">
           <div className="h-[3px] w-10 bg-ochre" />
           <span className="text-[13px] font-semibold text-bark-muted">{role}</span>
@@ -44,8 +57,10 @@ export default function StaffHeader({ role, who, onLogout, locations, location, 
             </select>
           </label>
         )}
-        <span className="hidden text-[13px] text-bark-muted sm:inline">{who}</span>
-        <button type="button" onClick={onLogout} className="min-h-10 rounded-xl bg-bark-soft px-3.5 text-sm font-semibold text-bark">
+        <span className="hidden text-[13px] text-bark-muted sm:inline">
+          {profile?.name ?? who}
+        </span>
+        <button type="button" onClick={logout} className="min-h-10 rounded-xl bg-bark-soft px-3.5 text-sm font-semibold text-bark">
           Log out
         </button>
       </div>
