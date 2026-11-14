@@ -154,7 +154,11 @@ export default function MonthlyGrid({ rooms, onDateSelect, selected }: Props) {
         </button>
         <button
           onClick={goToday}
-          className="ml-2 min-h-10 rounded-xl bg-ochre px-4 text-sm font-semibold text-sand-card hover:bg-bark-deep"
+          className={`ml-2 min-h-10 rounded-xl px-4 text-sm font-semibold transition-colors ${
+            year === today.getFullYear() && month === today.getMonth()
+              ? 'bg-bark-deep text-sand-card'
+              : 'bg-ochre text-sand-card hover:bg-bark-deep'
+          }`}
         >
           This Month
         </button>
