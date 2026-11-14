@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { LOCATIONS } from '../lib/sampleStaff';
-import { fetchDayBars, fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
+import { fetchLocationsWithRooms, fetchWindowBars, type LocationWithRooms } from '../lib/data';
 import type { GridBar } from '../lib/staffTypes';
 import RoomGrid from '../components/RoomGrid';
-import HourlyGrid from '../components/HourlyGrid';
 import RoomDetailView from '../components/RoomDetailView';
 import MonthlyGrid from '../components/MonthlyGrid';
 import VacancyView from '../components/VacancyView';
 import StaffHeader from '../components/StaffHeader';
 
-type ViewMode = 'overview' | 'hourly' | 'monthly' | 'day';
+type ViewMode = 'overview' | 'today' | 'monthly' | 'day';
 
 function fmtDay(d: string): string {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -32,7 +31,6 @@ function nextDayLabels(n: number): string[] {
 export default function StaffPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [selectedRoom, setSelectedRoom] = useState<{ name: string; number: number } | null>(null);
-  const [selectedDate, setSelectedDate] = useState(localISO(new Date()));
   const [zoomLevel, setZoomLevel] = useState(1); // 1 = 7 days, 2 = 4 days, 3 = 2 days
   const [openDates, setOpenDates] = useState<string[]>([]);
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -60,14 +58,12 @@ export default function StaffPage() {
   const [bars, setBars] = useState<GridBar[]>([]);
 
   const loadBars = useCallback(() => {
-    const current = viewMode === 'day' && activeDate ? activeDate : selectedDate;
-    const fetch = viewMode === 'overview'
-      ? fetchWindowBars(localISO(new Date()), numColumns, roomIndexByNumber)
-      : fetchDayBars(current, roomIndexByNumber);
-    fetch
+    const windowStart = viewMode === 'day' && activeDate ? activeDate : localISO(new Date());
+    const windowDays = viewMode === 'overview' ? numColumns : 1;
+    fetchWindowBars(windowStart, windowDays, roomIndexByNumber)
       .then((next) => setBars(next))
       .catch((e) => console.error('bars fetch failed', e));
-  }, [viewMode, activeDate, selectedDate, numColumns, roomIndexByNumber]);
+  }, [viewMode, activeDate, numColumns, roomIndexByNumber]);
 
   useEffect(() => {
     loadBars();
@@ -108,12 +104,9 @@ export default function StaffPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => {
-              setSelectedDate(localISO(new Date()));
-              setViewMode('hourly');
-            }}
+            onClick={() => setViewMode('today')}
             className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${
-              viewMode === 'hourly'
+              viewMode === 'today'
                 ? 'bg-bark-deep text-sand-card'
                 : 'bg-ochre text-sand-card hover:bg-bark-deep'
             }`}
@@ -239,10 +232,10 @@ export default function StaffPage() {
                     : zoomLevel === 2
                     ? 'Rooms, next 4 days'
                     : 'Rooms, next 2 days'
-                  : viewMode === 'hourly'
-                  ? 'Today - Hourly Schedule'
+                  : viewMode === 'today'
+                  ? 'Rooms, today'
                   : viewMode === 'day' && activeDate
-                  ? `${fmtDay(activeDate)} - Hourly Schedule`
+                  ? `Rooms, ${fmtDay(activeDate)}`
                   : 'Monthly View'}
               </h3>
               <span className="text-[13px] text-bark-muted">
@@ -252,58 +245,34 @@ export default function StaffPage() {
                   ? zoomLevel > 1
                     ? 'Zoomed view - use slider to adjust'
                     : 'Check-out is always 10:00 AM'
-                  : viewMode === 'hourly'
+                  : viewMode === 'today' || viewMode === 'day'
                   ? 'Click room name for detailed view'
-                  : viewMode === 'day'
-                  ? `Schedule for ${activeDate ?? ''}`
                   : 'Click a day to open its schedule'}
               </span>
             </div>
-            {viewMode === 'overview' ? (
-              showVacancy ? (
-                <VacancyView rooms={rooms} bars={bars} mode="days" dayLabels={dayLabels} />
-              ) : (
-                <RoomGrid
-                  days={dayLabels}
-                  rooms={rooms}
-                  bars={bars}
-                  onRoomClick={(roomNumber) => {
-                    const room = rooms[roomNumber - 1];
-                    setSelectedRoom({ name: room.name, number: roomNumber });
-                  }}
-                  zoomLevel={zoomLevel}
-                />
-              )
-            ) : viewMode === 'hourly' ? (
-              showVacancy ? (
-                <VacancyView rooms={rooms} bars={bars} mode="hours" />
-              ) : (
-                <HourlyGrid
-                  date={selectedDate}
-                  rooms={rooms}
-                  bookings={bars}
-                  onDateChange={openDate}
-                />
-              )
-            ) : viewMode === 'day' && activeDate ? (
-              showVacancy ? (
-                <VacancyView rooms={rooms} bars={bars} mode="hours" />
-              ) : (
-                <HourlyGrid
-                  date={activeDate}
-                  rooms={rooms}
-                  bookings={bars}
-                  onDateChange={(newD) => {
-                    setOpenDates((p) => [...new Set(p.map((x) => (x === activeDate ? newD : x)))]);
-                    setActiveDate(newD);
-                  }}
-                />
-              )
-            ) : (
+            {viewMode === 'monthly' ? (
               <MonthlyGrid
                 rooms={rooms}
                 selected={activeDate}
                 onDateSelect={openDate}
+              />
+            ) : showVacancy ? (
+              <VacancyView
+                rooms={rooms}
+                bars={bars}
+                mode="days"
+                dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
+              />
+            ) : (
+              <RoomGrid
+                days={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
+                rooms={rooms}
+                bars={bars}
+                onRoomClick={(roomNumber) => {
+                  const room = rooms[roomNumber - 1];
+                  setSelectedRoom({ name: room.name, number: roomNumber });
+                }}
+                zoomLevel={viewMode === 'overview' ? zoomLevel : 1}
               />
             )}
           </section>
@@ -314,10 +283,9 @@ export default function StaffPage() {
         <RoomDetailView
           roomName={selectedRoom.name}
           roomNumber={selectedRoom.number}
-          bookings={bars}
+          bars={bars}
+          dayLabels={viewMode === 'overview' ? dayLabels : [dayLabels[0]]}
           onClose={() => setSelectedRoom(null)}
-          date={selectedDate}
-          onDateChange={setSelectedDate}
         />
       )}
     </div>

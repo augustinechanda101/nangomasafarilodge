@@ -137,61 +137,6 @@ export async function fetchWindowBars(
   return bars;
 }
 
-// Single date (hourly view): bars positioned by hour, 06:00–23:00 window
-export async function fetchDayBars(
-  dateISO: string,
-  roomIndexByNumber: Map<string, number>,
-): Promise<GridBar[]> {
-  const rows = await fetchBookingRows();
-  const dayStart = new Date(dateISO + 'T00:00:00').getTime();
-  const bars: GridBar[] = [];
-
-  for (const b of rows) {
-    for (const stay of b.stays ?? []) {
-      const roomNumber = stay.rooms?.[0]?.number;
-      const idx = roomNumber ? roomIndexByNumber.get(roomNumber) : undefined;
-      if (idx === undefined) continue;
-
-      const s = new Date(stay.starts_at);
-      const e = new Date(stay.ends_at);
-      const stayStart = s.getTime();
-      const stayEnd = e.getTime();
-      if (stayEnd <= dayStart || stayStart >= dayStart + DAY_MS) continue; // not this day
-
-      const arrivesToday = s.toDateString() === new Date(dayStart).toDateString();
-      const departsToday = e.toDateString() === new Date(dayStart).toDateString();
-
-      let startHour: number;
-      let endHour: number;
-      if (arrivesToday && departsToday) {
-        startHour = Math.max(6, s.getHours());
-        endHour = Math.min(23, Math.max(startHour + 1, e.getHours()));
-      } else if (arrivesToday) {
-        startHour = Math.max(6, s.getHours());
-        endHour = 23;
-      } else if (departsToday) {
-        startHour = 6;
-        endHour = Math.min(23, Math.max(7, e.getHours()));
-      } else {
-        startHour = 6;
-        endHour = 23;
-      }
-
-      bars.push({
-        room: idx + 1,
-        start: startHour,
-        end: endHour,
-        kind: kindFor(b.status),
-        label: labelFor(b),
-        invoice: b.invoice ?? undefined,
-        bookingId: b.id,
-        ...paymentOf(b),
-      });
-    }
-  }
-  return bars;
-}
-
 // Desk actions on a booking: update status + timestamps + write the log
 export async function bookingAction(verb: string, bookingId: number, label: string): Promise<string | null> {
   const now = new Date().toISOString();
