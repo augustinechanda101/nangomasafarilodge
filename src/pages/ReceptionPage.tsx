@@ -185,12 +185,21 @@ export default function ReceptionPage() {
     });
   };
 
-  // Alert actions: room alerts (id >= 30000) release the room; others log for now
+  // Alert actions: held rooms release; booking alerts check in / check out
   const handleAlert = async (id: number) => {
     if (id >= 30000) {
       const err = await setRoomState(id - 30000, 'ready', 'held room');
       if (err) console.error('release failed', err);
       fetchLocationsWithRooms().then(setLocations).catch(() => {});
+      loadBars();
+    } else {
+      const bookingId = id >= 20000 ? id - 20000 : id - 10000;
+      const verb = id >= 20000 ? 'checkin' : 'checkout';
+      // Label from the alert text: "Guest · Room N · …" → "Guest · Room N"
+      const alert = alerts.find((a) => a.id === id);
+      const label = alert ? alert.text.split(' · ').slice(0, 2).join(' · ') : 'alert action';
+      const err = await bookingAction(verb, bookingId, label);
+      if (err) console.error(`${verb} failed`, err);
       loadBars();
     }
     loadAlerts();
