@@ -355,7 +355,6 @@ export async function fetchGmData(): Promise<GmData> {
   const departuresToday = bookings.filter(
     (b) => b.status === 'checked_in' && lusakaDate(b.checkout_at) === today,
   ).length;
-  const roomsReady = rooms.filter((r) => r.housekeeping === 'ready').length;
 
   const paidOn = (dateStr: string) =>
     live.filter((p) => lusakaDate(p.recorded_at) === dateStr);
@@ -383,17 +382,15 @@ export async function fetchGmData(): Promise<GmData> {
   const occupancy = Math.round((occupiedNights / (totalRooms * daysElapsed)) * 100);
 
   const kpis: Kpi[] = [
-    { label: 'In house', value: String(inHouse), note: 'bookings checked in' },
-    { label: 'Arrivals today', value: String(arrivalsToday), note: 'expected today' },
-    { label: 'Departures today', value: String(departuresToday), note: 'due out by 10:00' },
-    { label: 'Rooms ready', value: `${roomsReady} / ${rooms.length}`, note: 'Dam Lodge + Farm House' },
-    { label: 'Occupancy', value: `${occupancy}%`, note: 'month to date' },
     { label: 'Revenue this month', value: `K${revMonth.toLocaleString()}`, note: `${monthPayments.length} payments · K${revToday.toLocaleString()} today` },
+    { label: 'Occupancy', value: `${occupancy}%`, note: 'month to date' },
+    { label: 'In house', value: String(inHouse), note: `${departuresToday} due out today` },
+    { label: 'Arrivals today', value: String(arrivalsToday), note: 'expected today' },
   ];
 
-  // --- Revenue, last 14 days (payments by recorded date, zero-filled) ---
+  // --- Revenue, last 7 days (payments by recorded date, zero-filled) ---
   const revenue: RevenuePoint[] = [];
-  for (let i = 13; i >= 0; i--) {
+  for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getTime() - i * DAY_MS);
     const day = lusakaDate(d.toISOString());
     const amount = paidOn(day).reduce((s, p) => s + Number(p.amount), 0);
@@ -413,7 +410,7 @@ export async function fetchGmData(): Promise<GmData> {
     .sort((a, b) => b.actions - a.actions);
 
   // --- Recent activity feed ---
-  const feed: GmFeedItem[] = logs.slice(0, 12).map((l) => ({
+  const feed: GmFeedItem[] = logs.slice(0, 6).map((l) => ({
     id: l.id,
     text: l.action,
     when: lusakaDate(l.at) === today
