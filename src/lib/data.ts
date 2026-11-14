@@ -371,7 +371,6 @@ export async function fetchAlerts(): Promise<AlertItem[]> {
 const lusakaDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Africa/Lusaka' });
 
-export interface StaffActions { name: string; actions: number }
 export interface ActivityEntry { id: number; text: string; date: string; time: string; who?: string }
 export interface StaffMember {
   id: string;
@@ -385,7 +384,6 @@ export interface GmData {
   kpis: Kpi[];
   revenue: RevenuePoint[];
   revenueMonths: RevenuePoint[];
-  staffTotals: StaffActions[];
 }
 
 // Activity entries for a Lusaka date range (inclusive), chronological.
@@ -503,24 +501,21 @@ export async function deleteStaff(id: string): Promise<string | null> {
 }
 
 export async function fetchGmData(): Promise<GmData> {
-  const [roomsRes, bookingsRes, paymentsRes, logsRes] = await Promise.all([
+  const [roomsRes, bookingsRes, paymentsRes] = await Promise.all([
     supabase.from('rooms').select('id, housekeeping, locations ( name )'),
     supabase
       .from('bookings')
       .select('id, status, expected_arrival, checkout_at, stays (room_id, starts_at, ends_at)')
       .neq('status', 'cancelled'),
     supabase.from('payments').select('amount, recorded_at, voided'),
-    supabase.from('activity_log').select('id, action, at').order('at', { ascending: false }),
   ]);
   if (roomsRes.error) throw roomsRes.error;
   if (bookingsRes.error) throw bookingsRes.error;
   if (paymentsRes.error) throw paymentsRes.error;
-  if (logsRes.error) throw logsRes.error;
 
   const rooms = (roomsRes.data ?? []) as { id: number; housekeeping: string; locations?: { name?: string } | { name?: string }[] | null }[];
   const bookings = bookingsRes.data ?? [];
   const payments = (paymentsRes.data ?? []) as { amount: number; recorded_at: string; voided: boolean }[];
-  const logs = logsRes.data ?? [];
 
   const today = lusakaDate(new Date().toISOString());
   const now = new Date();
@@ -598,19 +593,5 @@ export async function fetchGmData(): Promise<GmData> {
     revenueMonths.push({ day: label, amount, today: i === 0 });
   }
 
-  // --- Actions by staff, last 7 days (desk actions only — staff-account
-  //     actions belong to the management Logs, not here) ---
-  const weekAgo = lusakaDate(new Date(now.getTime() - 7 * DAY_MS).toISOString());
-  const byStaff = new Map<string, number>();
-  for (const l of logs) {
-    if (lusakaDate(l.at) < weekAgo) continue;
-    if (l.action.startsWith('staff ')) continue;
-    const m = l.action.match(/— by (.+)$/);
-    if (m) byStaff.set(m[1], (byStaff.get(m[1]) ?? 0) + 1);
-  }
-  const staffTotals: StaffActions[] = [...byStaff.entries()]
-    .map(([name, actions]) => ({ name, actions }))
-    .sort((a, b) => b.actions - a.actions);
-
-  return { kpis, revenue, revenueMonths, staffTotals };
+  return { kpis, revenue, revenueMonths };
 }

@@ -10,7 +10,6 @@ import LogsPanel from '../components/LogsPanel';
 import RecordsView from '../components/RecordsView';
 import RevenueChart from '../components/RevenueChart';
 import StaffHeader from '../components/StaffHeader';
-import StaffTotals from '../components/StaffTotals';
 import type { BookingRecord } from '../lib/staffTypes';
 
 const TABS = [
@@ -99,12 +98,7 @@ export default function GmPage() {
           </>
         )}
 
-        {tab === 'activity' && (
-          <div className="flex flex-col gap-4">
-            <ActivityPanel />
-            <StaffTotals rows={data.staffTotals} />
-          </div>
-        )}
+        {tab === 'activity' && <ActivityPanel />}
 
         {tab === 'records' && (
           <section className="rounded-2xl border border-sand-line bg-sand-card p-4">
